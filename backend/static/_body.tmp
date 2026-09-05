@@ -1,0 +1,763 @@
+<body>
+<header>
+  <div class="brand"><b>AUXION</b><span>CONTROL ROOM</span></div>
+  <div class="grow"></div>
+  <div class="tabs">
+    <div class="tab active" data-tab="control">Control</div>
+    <div class="tab" data-tab="revenue">Revenue</div>
+    <div class="tab" data-tab="traces">Traces</div>
+    <div class="tab" data-tab="policy">Policy</div>
+    <div class="tab" data-tab="audit">Audit</div>
+    <div class="tab" data-tab="providers">Providers</div>
+    <div class="tab" data-tab="ops">Ops</div>
+  </div>
+  <select id="merchant" title="Active merchant"></select>
+  <select id="tier" title="Buyer trust tier">
+    <option value="unknown">tier:unknown</option>
+    <option value="trusted">tier:trusted</option>
+    <option value="premium">tier:premium</option>
+  </select>
+  <button class="btn" id="themeBtn" style="width:34px">light</button>
+  <button class="kill" id="killBtn">KILL</button>
+</header>
+
+<!-- CONTROL -->
+<div class="wrap active" id="tab-control">
+  <div class="col">
+    <div class="card fill">
+      <h2>Live Conversation <span class="badge" id="chatMode">llm:auto</span></h2>
+      <div class="body fill" id="chat"></div>
+      <div class="quick">
+        <span>find a blue t-shirt under 800</span>
+        <span>buy a blue t-shirt</span>
+        <span>recommend add-ons</span>
+        <span>accept bundle</span>
+        <span>checkout</span>
+        <span>buy 3 slim fit jeans</span>
+      </div>
+      <div class="composer">
+        <input id="chatInput" placeholder="Type to the merchant agent..." autocomplete="off"/>
+        <button class="btn solid" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card fill">
+      <h2>Decision Timeline <span style="color:var(--line)">PLANNER → CRITIC → EXECUTOR</span></h2>
+      <div class="body fill" id="timeline"></div>
+    </div>
+    <div class="card" id="confirmCard" style="display:none">
+      <h2>Human Approval Required</h2>
+      <div class="body">
+        <div id="confirmText" style="font-size:13px;line-height:1.6"></div>
+        <div style="margin-top:11px;display:flex;gap:8px">
+          <button class="btn ok" id="approveBtn">Approve</button>
+          <button class="btn danger" id="rejectBtn">Reject</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Revenue &amp; Health</h2>
+      <div class="body">
+        <div class="gauges">
+          <div class="gauge"><div class="k">Settled Revenue</div><div class="v" id="stRevenue">₹0</div></div>
+          <div class="gauge"><div class="k">Orders</div><div class="v" id="stOrders">0</div></div>
+          <div class="gauge"><div class="k">Recovered</div><div class="v" id="stRecovered">₹0</div></div>
+          <div class="gauge"><div class="k">Upsell Rev</div><div class="v" id="stUpsell">₹0</div></div>
+        </div>
+        <div style="margin-top:9px;display:flex;gap:5px;flex-wrap:wrap">
+          <span class="chip" id="stMode">—</span>
+          <span class="chip" id="stSessions">sessions 0</span>
+          <span class="chip" id="stCamp">campaigns 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Risk / Confidence <span style="color:var(--line)">LAST DECISION</span></h2>
+      <div class="body">
+        <div class="gauge" style="background:transparent;border:none;padding:0">
+          <div class="k">Risk score</div>
+          <div class="v" id="riskVal">—</div>
+          <div class="bar"><span id="riskBar" style="width:0%"></span></div>
+          <div id="riskFactors"></div>
+          <div id="gateList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fill">
+      <h2>Products / Cart / Upsell</h2>
+      <div class="body fill" id="products"><span style="color:var(--muted)">Results show here.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVENUE -->
+<div class="wrap" id="tab-revenue">
+  <div class="col">
+    <div class="card">
+      <h2>Revenue Breakdown</h2>
+      <div class="body"><svg id="revBars" viewBox="0 0 400 200"></svg></div>
+    </div>
+    <div class="card fill">
+      <h2>Orders</h2>
+      <div class="body fill" id="ordersList"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Cumulative Settled Revenue</h2>
+      <div class="body"><svg id="revLine" viewBox="0 0 400 200"></svg></div>
+    </div>
+    <div class="card">
+      <h2>Campaign Funnel</h2>
+      <div class="body">
+        <div class="gauges">
+          <div class="gauge"><div class="k">Fired</div><div class="v" id="cFired">0</div></div>
+          <div class="gauge"><div class="k">Converted</div><div class="v" id="cConv">0</div></div>
+          <div class="gauge"><div class="k">Recovered</div><div class="v" id="cRec">₹0</div></div>
+          <div class="gauge"><div class="k">Upsell</div><div class="v" id="cUp">₹0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRACES -->
+<div class="wrap" id="tab-traces">
+  <div class="col">
+    <div class="card fill">
+      <h2>Trace Waterfall <span style="color:var(--line)">PER-MESSAGE SPAN TIMING</span>
+        <span class="grow"></span><button class="btn" id="refreshTraces">Refresh</button></h2>
+      <div class="body fill" id="traceList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- POLICY -->
+<div class="wrap" id="tab-policy">
+  <div class="col">
+    <div class="card fill">
+      <h2>Policy Editor <span style="color:var(--line)">HOT-SWAP · LIVE</span></h2>
+      <textarea id="policyText" spellcheck="false"></textarea>
+      <div class="composer">
+        <button class="btn solid" id="policySave">Save &amp; Reload</button>
+        <span id="policyMsg" style="align-self:center;color:var(--muted);font-family:var(--mono);font-size:11px"></span>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Adversarial Self-Test <span class="grow"></span><button class="btn" id="runSelfTest">Run</button></h2>
+      <div class="body selftest" id="selfTest"><span style="color:var(--muted)">Run to probe the safety gates.</span></div>
+    </div>
+    <div class="card fill">
+      <h2>Counterfactual <span style="color:var(--line)">IF GATE DIDN'T EXIST</span></h2>
+      <div class="body">
+        <div class="toolbar plain" style="padding:0 0 10px">
+          <select id="cfGate">
+            <option value="tier_ceiling">tier_ceiling</option>
+            <option value="global_ceiling">global_ceiling</option>
+            <option value="item_count">item_count</option>
+            <option value="stock">stock</option>
+            <option value="velocity">velocity</option>
+            <option value="token_scope">token_scope</option>
+          </select>
+          <button class="btn" id="cfRun">Simulate on current cart</button>
+        </div>
+        <div id="cfResult" style="color:var(--muted);font-size:12.5px;line-height:1.6">Build a cart in Control, then simulate removing a gate.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIT -->
+<div class="wrap" id="tab-audit">
+  <div class="col">
+    <div class="card fill">
+      <h2>Hash-Chained Audit Log
+        <span id="verifyBadge" class="badge"></span>
+        <span class="grow"></span>
+        <a class="btn" href="/api/audit/export?fmt=json">Export JSON</a>
+        <a class="btn" href="/api/audit/export?fmt=csv">Export CSV</a>
+      </h2>
+      <div class="body fill" id="auditFeed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROVIDERS -->
+<div class="wrap" id="tab-providers">
+  <div class="col">
+    <div class="card">
+      <h2>LLM Failover Chain <span style="color:var(--line)">FIRST HEALTHY LAYER SERVES</span>
+        <span class="grow"></span>
+        <span class="badge" id="provActive">active: —</span>
+        <button class="btn" id="pingBtn">Ping all providers</button>
+      </h2>
+      <div class="body" id="provList" style="max-height:none"><span style="color:var(--muted)">Loading…</span></div>
+    </div>
+    <div class="card">
+      <h2>Runtime</h2>
+      <div class="body">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip" id="provPayMode">payment: —</span>
+          <span class="chip" id="provMerchant">merchant: —</span>
+          <span class="chip" id="provChainState">chain: —</span>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin:11px 0 0;line-height:1.6">
+          Order of the chain = failover order. A layer degrades (bad key, 404 model, rate-limit, 5xx)
+          and the next layer serves transparently. If every layer fails, the deterministic intent
+          parser takes over and the failure reason is surfaced in this panel, in chat, and in the audit log.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPS -->
+<div class="wrap" id="tab-ops">
+  <div class="col">
+    <div class="card">
+      <h2>Demo Controls</h2>
+      <div class="body">
+        <div class="toolbar plain" style="padding:0">
+          <button class="btn" id="seedBtn">Seed reproducible demo</button>
+          <button class="btn danger" id="armFailBtn">Arm next-payment failure</button>
+          <label style="display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;cursor:pointer">
+            <input type="checkbox" id="demoModeChk" style="width:auto;padding:0;background:none;border:none"/> safe demo mode
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;cursor:pointer">
+            <input type="checkbox" id="simPayChk" style="width:auto;padding:0;background:none;border:none"/>
+            force simulated payments
+            <span class="chip" id="payModeChip">—</span>
+          </label>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin-top:11px;line-height:1.6">
+          Arm a failure, then checkout in Control to watch the pipeline mark the order failed,
+          preserve the cart and log a graceful recovery — no money captured.
+        </p>
+      </div>
+    </div>
+    <div class="card fill">
+      <h2>Agent Token Minter <span style="color:var(--line)">JWT SCOPE</span></h2>
+      <div class="body">
+        <div class="toolbar plain" style="padding:0">
+          <select id="tokTier"><option>trusted</option><option>premium</option><option>unknown</option></select>
+          <input id="tokMax" value="15000" style="width:90px"/>
+          <button class="btn solid" id="mintBtn">Mint token</button>
+        </div>
+        <textarea id="tokOut" style="min-height:84px;margin-top:9px" placeholder="token appears here" readonly></textarea>
+        <p style="color:var(--muted);font-size:11.5px;margin-top:8px" class="mono">feed this to the buyer agent: --token &lt;token&gt;</p>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card fill">
+      <h2>Agent Manifest &amp; MCP</h2>
+      <div class="body">
+        <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">Discoverable endpoints an external AI buyer uses:</p>
+        <p class="mono" style="font-size:12px"><a href="/.well-known/agent-commerce.json" target="_blank">/.well-known/agent-commerce.json</a></p>
+        <p class="mono" style="font-size:12px"><a href="/mcp/tools" target="_blank">/mcp/tools</a> — MCP tool definitions</p>
+        <p class="mono" style="font-size:12px"><a href="/mcp/client.json" target="_blank">/mcp/client.json</a> — paste-ready client config</p>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:11.5px;line-height:1.7">
+          # run the independent AI buyer:<br/>
+          python buyer_agent.py "buy white sneakers under 3000" --tier trusted
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let sessionId = null, killed = false, lastCart = [];
+const rj = r => r.json();
+const post = (url, body) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}).then(rj);
+const getj = url => fetch(url).then(rj);
+const inr = n => '₹' + Math.round(n || 0);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.wrap').forEach(w => w.classList.remove('active'));
+  $('#tab-' + t.dataset.tab).classList.add('active');
+  if (t.dataset.tab === 'policy') loadPolicy();
+  if (t.dataset.tab === 'audit') loadAudit();
+  if (t.dataset.tab === 'revenue') loadRevenue();
+  if (t.dataset.tab === 'traces') loadTraces();
+  if (t.dataset.tab === 'providers') loadProviders();
+});
+
+/* theme */
+const themeBtn = $('#themeBtn');
+function applyTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  themeBtn.textContent = dark ? 'light' : 'dark';
+}
+themeBtn.onclick = () => {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+};
+applyTheme();
+
+/* chat */
+function addMsg(text, who) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.textContent = text;
+  d.appendChild(b);
+  const chat = $('#chat');
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+async function send(text) {
+  text = (text != null ? text : $('#chatInput').value).trim();
+  if (!text) return;
+  addMsg(text, 'user');
+  $('#chatInput').value = '';
+  try {
+    const r = await post('/api/chat', {text, session_id: sessionId, tier: $('#tier').value});
+    sessionId = r.session_id;
+    addMsg(r.reply, 'agent');
+    if (r._llm_error) addMsg('LLM note: ' + r._llm_error, 'agent');
+    if (r.cart) lastCart = r.cart;
+    if (r.products) renderProducts(r.products, r.upsell, r.cart, r.bundle, r.bundle_discount);
+    else if (r.cart) renderProducts([], r.upsell, r.cart, r.bundle, r.bundle_discount);
+  } catch (e) {
+    addMsg('request failed: ' + e, 'agent');
+  }
+}
+$('#sendBtn').onclick = () => send();
+$('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+document.querySelectorAll('.quick span').forEach(s => s.onclick = () => send(s.textContent));
+
+/* products / cart / upsell / bundle */
+function prodRow(p, extraRight) {
+  const d = document.createElement('div');
+  d.className = 'prod';
+  d.innerHTML = `<span class="t">${esc(p.title)}</span><span class="c">${esc(p.category || '')} · stock ${p.stock ?? '—'}</span>`;
+  if (extraRight) d.appendChild(extraRight);
+  const price = document.createElement('span');
+  price.className = 'p';
+  price.textContent = inr(p.price);
+  d.appendChild(price);
+  return d;
+}
+function renderProducts(products, upsellIds, cart, bundle, bundleDiscount) {
+  const el = $('#products');
+  el.innerHTML = '';
+  const sub = t => { const d = document.createElement('div'); d.className = 'sublabel'; d.textContent = t; el.appendChild(d); };
+  if (cart && cart.length) {
+    sub('Cart — ' + inr((cart || []).reduce((s, c) => s + c.qty * c.price, 0) - (bundleDiscount || 0)) + (bundleDiscount ? `  (bundle saves ₹${Math.round(bundleDiscount)})` : ''));
+    cart.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'prod';
+      row.innerHTML = `<span class="t">${c.qty}× ${esc(c.product_id)}</span><span class="p">₹${Math.round(c.price * c.qty)}</span>`;
+      const x = document.createElement('span');
+      x.className = 'x';
+      x.textContent = 'remove';
+      x.onclick = async () => {
+        await post('/api/cart/remove', {session_id: sessionId, product_id: c.product_id});
+        addMsg('Removed ' + c.product_id + ' from cart.', 'agent');
+        loadCartView();
+      };
+      row.appendChild(x);
+      el.appendChild(row);
+    });
+  }
+  if (products && products.length) {
+    sub('Results');
+    products.forEach(p => {
+      const x = document.createElement('span');
+      x.className = 'x';
+      x.textContent = '+ add';
+      x.onclick = () => send('buy ' + p.title);
+      el.appendChild(prodRow(p, x));
+    });
+  }
+  if (upsellIds && upsellIds.length) {
+    sub('Cross-sell — frequently bought together');
+    const row = document.createElement('div');
+    row.className = 'chiprow';
+    upsellIds.forEach(id => {
+      const c = document.createElement('span');
+      c.className = 'chip chipadd';
+      c.textContent = id + '  +';
+      c.onclick = () => send('add ' + id);
+      row.appendChild(c);
+    });
+    el.appendChild(row);
+  }
+  if (bundle) {
+    const card = document.createElement('div');
+    card.className = 'bundle-card';
+    if (bundle.accepted) {
+      card.innerHTML = `<div class="bt">Bundle applied — ${esc(bundle.title)}</div>
+        <div class="bm">₹${Math.round(bundle.bundle_price)} <span style="color:var(--muted)">(save ₹${Math.round(bundle.save)} at checkout)</span></div>`;
+    } else {
+      card.innerHTML = `<div class="bt">${esc(bundle.title)}</div>
+        <div class="bm">add ${bundle.add.map(esc).join(', ')} · pay ₹${Math.round(bundle.bundle_price)} · save ₹${Math.round(bundle.save)} (${bundle.discount_pct}%)</div>`;
+      const b = document.createElement('button');
+      b.className = 'btn solid';
+      b.textContent = 'Accept bundle';
+      b.onclick = async () => {
+        b.disabled = true;
+        const r = await post('/api/bundle/accept', {session_id: sessionId, tier: $('#tier').value, token: null});
+        b.disabled = false;
+        if (r.error) { addMsg(r.reply, 'agent'); return; }
+        sessionId = r.session_id;
+        lastCart = r.cart || lastCart;
+        addMsg(r.reply, 'agent');
+        renderProducts([], [], r.cart, r.bundle, r.bundle_discount);
+      };
+      card.appendChild(b);
+    }
+    el.appendChild(card);
+  }
+  if (!products?.length && !cart?.length && !bundle && !(upsellIds && upsellIds.length))
+    el.innerHTML = '<span style="color:var(--muted)">Results show here.</span>';
+}
+async function loadCartView() {
+  /* re-render from the last known state after a mutation */
+  renderProducts([], [], lastCart, null, null);
+}
+
+/* timeline */
+function step(kind, name, meta) {
+  const d = document.createElement('div');
+  d.className = 'step ' + kind;
+  const n = document.createElement('span');
+  n.className = 'name';
+  n.textContent = name;
+  const m = document.createElement('span');
+  m.className = 'meta';
+  m.textContent = meta || '';
+  d.append(n, m);
+  const tl = $('#timeline');
+  tl.appendChild(d);
+  tl.scrollTop = tl.scrollHeight;
+}
+
+/* stats */
+function renderStats(s) {
+  if (!s) return;
+  $('#stRevenue').textContent = inr(s.revenue);
+  $('#stOrders').textContent = s.orders_settled;
+  $('#stRecovered').textContent = inr(s.recovered);
+  $('#stUpsell').textContent = inr(s.upsell_revenue);
+  $('#stMode').textContent = 'payment: ' + s.payment_mode;
+  $('#stSessions').textContent = 'sessions ' + s.active_sessions;
+  $('#stCamp').textContent = 'campaigns ' + ((s.campaigns && s.campaigns.fired) || 0);
+  if (s.merchant) {
+    $('#provMerchant').textContent = 'merchant: ' + s.merchant.name;
+    $('#provPayMode').textContent = 'payment: ' + s.payment_mode;
+  }
+  $('#payModeChip').textContent = s.payment_mode;
+  $('#simPayChk').checked = s.payment_mode === 'simulated';
+  setKill(s.kill_switch);
+  if (s.demo_mode != null) $('#demoModeChk').checked = s.demo_mode;
+}
+function renderRisk(risk, confidence, gates) {
+  if (!risk) return;
+  $('#riskVal').textContent = risk.score + (confidence != null ? '  ·  conf ' + confidence : '');
+  $('#riskBar').style.width = Math.round(risk.score * 100) + '%';
+  $('#riskFactors').innerHTML = (risk.factors || []).map(f =>
+    `<div>· ${esc(f.factor)} — ${esc(f.detail)} <span style="color:var(--accent)">+${f.contribution}</span></div>`).join('') || '<div>no risk factors</div>';
+  if (gates) {
+    $('#gateList').innerHTML = gates.map(g =>
+      `<span class="chip ${g.passed ? 'good' : 'bad'}">${g.passed ? '✓' : '✗'} ${esc(g.gate)}</span>`).join('');
+  }
+}
+
+/* kill */
+function setKill(on) {
+  killed = on;
+  const b = $('#killBtn');
+  b.classList.toggle('on', !!on);
+  b.textContent = on ? 'KILLED — RESUME' : 'KILL';
+}
+$('#killBtn').onclick = async () => {
+  const r = await post('/api/kill', {engaged: !killed});
+  setKill(r.kill_switch);
+};
+
+/* confirm */
+function showConfirm(t) { $('#confirmCard').style.display = ''; $('#confirmText').textContent = t; }
+function hideConfirm() { $('#confirmCard').style.display = 'none'; }
+$('#approveBtn').onclick = () => doConfirm(true);
+$('#rejectBtn').onclick = () => doConfirm(false);
+async function doConfirm(approve) {
+  const r = await post('/api/confirm', {session_id: sessionId, approve});
+  addMsg(r.reply, 'agent');
+  hideConfirm();
+}
+
+/* revenue tab */
+async function loadRevenue() {
+  const s = await getj('/api/stats');
+  const o = await getj('/api/orders?limit=100');
+  drawRevBars(s); drawRevLine(o.orders || []); renderOrders(o.orders || []);
+  $('#cFired').textContent = (s.campaigns && s.campaigns.fired) || 0;
+  $('#cConv').textContent = (s.campaigns && s.campaigns.converted) || 0;
+  $('#cRec').textContent = inr(s.recovered);
+  $('#cUp').textContent = inr(s.upsell_revenue);
+}
+function drawRevBars(s) {
+  const data = [['Settled', s.revenue], ['Recovered', s.recovered || 0], ['Upsell', s.upsell_revenue || 0]];
+  const max = Math.max(1, ...data.map(d => d[1]));
+  const bw = 90, gap = 35;
+  let svg = '';
+  data.forEach((d, i) => {
+    const h = (d[1] / max) * 140; const x = 40 + i * (bw + gap); const y = 170 - h;
+    svg += `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(1, h)}" rx="3" fill="var(--accent)" opacity="${0.5 + i * 0.25}"/>`;
+    svg += `<text x="${x + bw / 2}" y="188" fill="var(--muted)" font-size="10" font-family="IBM Plex Mono" text-anchor="middle">${d[0].toUpperCase()}</text>`;
+    svg += `<text x="${x + bw / 2}" y="${y - 7}" fill="var(--text)" font-size="12" font-family="IBM Plex Mono" text-anchor="middle">₹${Math.round(d[1])}</text>`;
+  });
+  $('#revBars').innerHTML = svg;
+}
+function drawRevLine(orders) {
+  const settled = orders.filter(o => o.status === 'settled').sort((a, b) => a.created_at - b.created_at);
+  let cum = 0;
+  const pts = settled.map(o => { cum += o.amount; return cum; });
+  if (!pts.length) {
+    $('#revLine').innerHTML = '<text x="200" y="100" fill="var(--muted)" text-anchor="middle" font-size="11">no settled orders yet</text>';
+    return;
+  }
+  const max = Math.max(1, cum);
+  const stepX = pts.length > 1 ? (360 / (pts.length - 1)) : 0;
+  let path = '', dots = '';
+  pts.forEach((p, i) => {
+    const x = 20 + i * stepX; const y = 180 - (p / max) * 150;
+    path += (i ? 'L' : 'M') + x + ' ' + y + ' ';
+    dots += `<circle cx="${x}" cy="${y}" r="2.5" fill="var(--accent)"/>`;
+  });
+  $('#revLine').innerHTML = `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2"/>${dots}<text x="20" y="20" fill="var(--muted)" font-size="10" font-family="IBM Plex Mono">₹${Math.round(cum)} CUMULATIVE</text>`;
+}
+function renderOrders(orders) {
+  const el = $('#ordersList');
+  el.innerHTML = '';
+  orders.forEach(o => {
+    const d = document.createElement('div');
+    d.className = 'orderrow';
+    d.innerHTML = `<span class="st st-${esc(o.status)}">${esc(o.status).toUpperCase()}</span>
+      <span>${esc(o.order_id)}</span><span style="color:var(--muted)">${o.items.length} item(s)</span>
+      <span class="amt">₹${Math.round(o.amount)}</span>`;
+    if (o.status === 'settled') {
+      const b = document.createElement('button');
+      b.className = 'btn danger';
+      b.style.cssText = 'margin-left:8px;padding:4px 9px';
+      b.textContent = 'Refund';
+      b.onclick = async () => { await post(`/api/orders/${o.order_id}/refund`, {}); loadRevenue(); };
+      d.appendChild(b);
+    }
+    el.appendChild(d);
+  });
+}
+
+/* traces */
+async function loadTraces() {
+  const r = await getj('/api/traces?limit=15');
+  const el = $('#traceList');
+  el.innerHTML = '';
+  (r.traces || []).forEach(t => el.appendChild(traceEl(t)));
+  if (!(r.traces || []).length)
+    el.innerHTML = '<span style="color:var(--muted)">Send a message in Control to generate traces.</span>';
+}
+$('#refreshTraces').onclick = loadTraces;
+function traceEl(t) {
+  const d = document.createElement('div');
+  d.className = 'trace';
+  const total = t.duration_ms || 1;
+  let rows = `<div class="thead"><span>${esc(t.name)} · ${esc(t.trace_id)}</span><span>${t.duration_ms} ms</span></div>`;
+  (t.spans || []).forEach(s => {
+    const off = ((s.start - t.start) * 1000 / total) * 100;
+    const w = Math.max(1, (s.duration_ms / total) * 100);
+    rows += `<div class="spanrow"><span class="lbl">${esc(s.name)}</span><span class="spantrack"><span class="spanbar" style="left:${off}%;width:${w}%"></span></span><span class="ms">${s.duration_ms} ms</span></div>`;
+  });
+  d.innerHTML = rows;
+  return d;
+}
+
+/* policy */
+async function loadPolicy() { $('#policyText').value = await fetch('/api/policy/raw').then(r => r.text()); }
+$('#policySave').onclick = async () => {
+  const r = await post('/api/policy', {yaml: $('#policyText').value});
+  $('#policyMsg').textContent = r.ok ? `saved · v${r.version}` : ('error: ' + r.error);
+};
+$('#runSelfTest').onclick = async () => renderSelfTest(await post('/api/self-test', {}));
+function renderSelfTest(r) {
+  const el = $('#selfTest');
+  el.innerHTML = `<div style="margin-bottom:9px"><b>${r.passed}/${r.total}</b> gates held
+    ${r.all_passed ? '<span class="badge good">ALL PASS</span>' : '<span class="badge bad">CHECK</span>'}</div>`;
+  r.cases.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'case';
+    d.innerHTML = `<span class="dot ${c.pass ? 'ok' : 'bad'}"></span><span>${esc(c.name)}</span><span class="got">${esc(c.got)}</span>`;
+    el.appendChild(d);
+  });
+}
+$('#cfRun').onclick = async () => {
+  if (!lastCart.length) { $('#cfResult').textContent = 'Build a cart in Control first.'; return; }
+  const r = await post('/api/policy/counterfactual', {session_id: sessionId, items: lastCart, tier: $('#tier').value, remove_gate: $('#cfGate').value});
+  $('#cfResult').innerHTML = `<div style="margin-bottom:8px">${esc(r.explanation)}</div>
+    with gate: <b>${esc(r.with_gate)}</b> · without: <b style="color:${r.changed ? 'var(--bad)' : 'var(--muted)'}">${esc(r.without_gate)}</b>
+    ${r.changed ? '<span class="badge bad">GATE MATTERS</span>' : '<span class="badge">no change</span>'}`;
+};
+
+/* audit */
+async function loadAudit() {
+  const r = await getj('/api/audit?limit=400');
+  const feed = $('#auditFeed');
+  feed.innerHTML = '';
+  r.entries.slice().reverse().forEach(e => appendAuditRow(e, feed));
+  renderVerify(r.verify);
+}
+function appendAuditRow(e, feed) {
+  const d = document.createElement('div');
+  d.className = 'audit-row';
+  const t = new Date(e.ts * 1000).toLocaleTimeString();
+  d.innerHTML = `<span class="seq">#${e.seq}</span><span>${t}</span><span class="et">${esc(e.event_type)}</span><span class="hash">${(e.hash || '').slice(0, 24)}…</span>`;
+  if (feed.firstChild) feed.insertBefore(d, feed.firstChild); else feed.appendChild(d);
+}
+function renderVerify(v) {
+  const b = $('#verifyBadge');
+  if (!v) return;
+  b.textContent = v.valid ? `CHAIN VALID · ${v.count}` : `BROKEN AT #${v.broken_at}`;
+  b.className = 'badge ' + (v.valid ? 'good' : 'bad');
+}
+
+/* providers tab */
+async function loadProviders() {
+  try {
+    const st = await getj('/api/llm/status');
+    const el = $('#provList');
+    el.innerHTML = '';
+    st.chain.forEach((p, i) => {
+      const serving = st.active_provider === p.id;
+      const row = document.createElement('div');
+      row.className = 'provrow' + (serving ? ' serving' : '');
+      const dotCls = !p.configured ? 'off' : (p.status === 'ok' ? 'ok' : (p.status === 'degraded' ? 'warn' : 'off'));
+      row.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span>
+        <span class="dot ${dotCls}"></span>
+        <span class="pid">${esc(p.id)}</span>
+        <span class="pm">${esc(p.model)}</span>
+        <span class="pl">${p.last_latency_ms != null ? p.last_latency_ms + ' ms' : ''}</span>
+        ${serving ? '<span class="badge serving">serving</span>' : ''}
+        ${!p.configured ? '<span class="badge">unconfigured</span>' : ''}`;
+      el.appendChild(row);
+      if (p.last_error) {
+        const e = document.createElement('div');
+        e.className = 'provrow' + (serving ? ' serving' : '');
+        e.style.marginTop = '-3px';
+        e.innerHTML = `<span style="padding-left:34px;color:var(--bad);font-family:var(--mono);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.last_error)}</span>`;
+        el.appendChild(e);
+      }
+    });
+    $('#provActive').textContent = 'active: ' + (st.active_provider ? st.active_provider + ' · ' + st.active_model : '—');
+    $('#provChainState').textContent = 'chain: ' + st.chain.filter(c => c.configured).length + '/' + st.chain.length + ' configured';
+  } catch (e) {
+    $('#provList').innerHTML = '<span style="color:var(--bad)">' + esc(String(e)) + '</span>';
+  }
+}
+$('#pingBtn').onclick = async () => {
+  $('#pingBtn').disabled = true;
+  $('#pingBtn').textContent = 'Pinging…';
+  try {
+    await post('/api/llm/ping', {});
+    await loadProviders();
+  } finally {
+    $('#pingBtn').disabled = false;
+    $('#pingBtn').textContent = 'Ping all providers';
+  }
+};
+
+/* merchant switch */
+async function loadMerchants() {
+  const r = await getj('/api/merchants');
+  const sel = $('#merchant');
+  sel.innerHTML = '';
+  r.merchants.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.name;
+    if (m.id === r.active) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = async () => {
+    await post('/api/merchant', {merchant_id: sel.value});
+    sessionId = null;
+    $('#chat').innerHTML = '';
+    refreshStats();
+  };
+}
+
+/* ops */
+$('#seedBtn').onclick = async () => { await post('/api/seed', {}); refreshStats(); if ($('#tab-revenue').classList.contains('active')) loadRevenue(); };
+$('#armFailBtn').onclick = async () => { await post('/api/arm-failure', {}); step('failed', 'Failure armed', 'next payment will fail'); };
+$('#demoModeChk').onchange = async e => { await post('/api/demo-mode', {enabled: e.target.checked}); };
+$('#simPayChk').onchange = async e => {
+  await post('/api/payment-mode', {simulated: e.target.checked});
+  refreshStats();
+};
+$('#mintBtn').onclick = async () => {
+  const r = await post('/api/token', {tier: $('#tokTier').value, max_amount: parseFloat($('#tokMax').value)});
+  $('#tokOut').value = r.token;
+};
+
+function refreshStats() { getj('/api/stats').then(renderStats).catch(() => {}); }
+
+/* websocket */
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    switch (m.type) {
+      case 'snapshot': renderStats(m.stats); renderVerify(m.audit_verify); break;
+      case 'plan': step('plan', 'PLANNER', `${m.proposal.intent} · ${m.proposal._source}`); break;
+      case 'policy_decision': {
+        const d = m.decision;
+        step('policy', 'CRITIC / POLICY', `${d.decision} · risk ${d.risk.score}`);
+        renderRisk(d.risk, d.confidence, d.gates);
+        break;
+      }
+      case 'order_created': step('order', 'EXECUTOR · ORDER', '₹' + Math.round(m.order.amount)); break;
+      case 'settled': step('settled', 'SETTLED + SIGNED RECEIPT', m.receipt.body.receipt_id); renderStats(m.stats); break;
+      case 'payment_failed': step('failed', 'PAYMENT FAILED', m.reason); addMsg('Payment failed: ' + m.reason + '. ' + m.recovery, 'agent'); break;
+      case 'refund': step('policy', 'REFUND ISSUED', m.order.order_id); renderStats(m.stats); break;
+      case 'denied': step('deny', 'DENIED', (m.violations || []).join('; ')); break;
+      case 'needs_confirmation': step('policy', 'NEEDS HUMAN APPROVAL', '₹' + Math.round(m.amount));
+        showConfirm(`Order ₹${Math.round(m.amount)} — ${(m.decision.violations || []).join('; ')}`); break;
+      case 'kill_switch': step(m.engaged ? 'halted' : 'allow', m.engaged ? 'KILL SWITCH ENGAGED' : 'RESUMED', ''); setKill(m.engaged); break;
+      case 'search_results': renderProducts(m.products, (m.upsell || []).map(u => u.id)); break;
+      case 'cart_update': lastCart = m.cart || lastCart; renderProducts([], (m.upsell || []).map(u => u.id), m.cart, m.bundle, m.bundle_discount); break;
+      case 'campaign_fired': addMsg(m.message, 'campaign'); step('policy', 'CAMPAIGN FIRED', m.kind); break;
+      case 'policy_update': step('policy', 'POLICY HOT-SWAPPED', 'v' + m.version); break;
+      case 'self_test': renderSelfTest(m); break;
+      case 'merchant_switch': refreshStats(); loadMerchants(); break;
+      case 'seeded': renderStats(m.stats); break;
+      case 'failure_armed': break;
+    }
+    if (m.type === 'plan' && m.proposal._source && m.proposal._source.startsWith('llm:'))
+      $('#chatMode').textContent = 'llm:' + m.proposal._source.slice(4);
+    if (m.type === 'plan' && m.proposal._source === 'deterministic')
+      $('#chatMode').textContent = 'llm:deterministic';
+    if ($('#tab-audit').classList.contains('active')) loadAudit();
+    if ($('#tab-revenue').classList.contains('active')) loadRevenue();
+    if ($('#tab-providers').classList.contains('active') && m.type === 'plan') loadProviders();
+  };
+  ws.onclose = () => setTimeout(connect, 1000);
+}
+connect();
+loadMerchants();
+refreshStats();
+</script>
+</body>

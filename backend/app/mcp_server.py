@@ -41,6 +41,12 @@ TOOLS = [
         "inputSchema": {"type": "object", "properties": {
             "session_id": {"type": "string"}}, "required": ["session_id"]},
     },
+    {
+        "name": "accept_bundle",
+        "description": "Accept the bundle currently offered for the cart (adds missing items, applies discount).",
+        "inputSchema": {"type": "object", "properties": {
+            "session_id": {"type": "string"}}, "required": ["session_id"]},
+    },
 ]
 
 
@@ -63,5 +69,8 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict:
         return {"content": [{"type": "json", "json": r}]}
     if name == "checkout":
         r = orchestrator.handle_message("checkout", session_id=args.get("session_id"))
+        return {"content": [{"type": "json", "json": r}]}
+    if name == "accept_bundle":
+        r = orchestrator.accept_bundle(session_id=args.get("session_id"))
         return {"content": [{"type": "json", "json": r}]}
     return {"isError": True, "content": [{"type": "text", "text": f"unknown tool {name}"}]}

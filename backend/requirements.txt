@@ -5,3 +5,4 @@ pyyaml==6.0.2
 python-dotenv==1.0.1
 httpx==0.28.1
 razorpay==1.4.2
+setuptools<81  # razorpay 1.4.2 imports pkg_resources, removed in setuptools>=81

@@ -21,7 +21,8 @@ from .campaigns import campaign_engine
 from .catalog import catalog
 from .config import STATIC_DIR, settings
 from .mcp_server import call_tool, list_tools
-from .orchestrator import orchestrator, _PENDING_SETTLE, _order_view
+from .orchestrator import orchestrator, _PENDING_SETTLE
+from .llm import llm_chain
 from .payments import payment_engine
 from .policy import policy_engine
 from .seed import seed_demo
@@ -29,7 +30,19 @@ from .tracing import tracer
 
 db.init_db()
 
-app = FastAPI(title="Auxion Agentic Commerce", version="2.0")
+app = FastAPI(title="Auxion Agentic Commerce", version="2.1")
+
+
+# ---------- optional admin auth ----------
+@app.middleware("http")
+async def _admin_auth(request: Request, call_next):
+    tok = settings.admin_token
+    if tok and request.url.path.startswith("/api/"):
+        open_paths = ("/api/token", "/api/llm/status", "/api/stats")
+        if not request.url.path.startswith(open_paths):
+            if request.headers.get("x-auxion-token") != tok:
+                return JSONResponse({"error": "unauthorized: set X-Auxion-Token header"}, status_code=401)
+    return await call_next(request)
 
 
 # ---------- live event fan-out ----------
@@ -87,6 +100,10 @@ class DemoModeIn(BaseModel):
     enabled: bool
 
 
+class PaymentModeIn(BaseModel):
+    simulated: bool
+
+
 class PolicyIn(BaseModel):
     yaml: str
 
@@ -110,6 +127,17 @@ class CounterfactualIn(BaseModel):
 
 class MerchantIn(BaseModel):
     merchant_id: str
+
+
+class BundleAcceptIn(BaseModel):
+    session_id: str | None = None
+    tier: str = "unknown"
+    token: str | None = None
+
+
+class CartRemoveIn(BaseModel):
+    session_id: str
+    product_id: str
 
 
 class McpCallIn(BaseModel):
@@ -140,6 +168,14 @@ def demo_mode(body: DemoModeIn):
     return {"demo_mode": orchestrator.demo_mode}
 
 
+@app.post("/api/payment-mode")
+def payment_mode(body: PaymentModeIn):
+    payment_engine.set_forced_simulated(body.simulated)
+    audit.append("payment_mode", {"mode": payment_engine.mode, "forced_simulated": body.simulated})
+    hub.publish({"type": "payment_mode", "mode": payment_engine.mode})
+    return {"payment_mode": payment_engine.mode}
+
+
 @app.get("/api/stats")
 def stats():
     return orchestrator.stats()
@@ -162,6 +198,27 @@ def set_merchant(body: MerchantIn):
         audit.append("merchant_switch", {"merchant": body.merchant_id})
         hub.publish({"type": "merchant_switch", "merchant": catalog.merchant})
     return {"ok": ok, "active": catalog.active, "merchant": catalog.merchant}
+
+
+@app.post("/api/cart/remove")
+def cart_remove(body: CartRemoveIn):
+    return orchestrator.remove_from_cart(body.session_id, body.product_id)
+
+
+@app.post("/api/bundle/accept")
+def bundle_accept(body: BundleAcceptIn):
+    return orchestrator.accept_bundle(session_id=body.session_id, tier=body.tier, token=body.token)
+
+
+# ---------- LLM provider chain ----------
+@app.get("/api/llm/status")
+def llm_status():
+    return llm_chain.status()
+
+
+@app.post("/api/llm/ping")
+def llm_ping():
+    return llm_chain.ping_all()
 
 
 # ---------- orders / refunds / failure ----------
@@ -315,6 +372,23 @@ def mcp_call(body: McpCallIn):
     return call_tool(body.name, body.arguments)
 
 
+@app.get("/mcp/client.json")
+def mcp_client_config():
+    """Ready-to-paste client config pointing an external MCP-capable agent at this store."""
+    base = settings.public_url.rstrip("/")
+    return {
+        "mcpServers": {
+            "auxion-merchant": {
+                "type": "http",
+                "tools": f"{base}/mcp/tools",
+                "call": f"{base}/mcp/call",
+                "manifest": f"{base}/.well-known/agent-commerce.json",
+            }
+        },
+        "note": "Copy this block into your MCP client config. All calls pass through the same policy-gated pipeline.",
+    }
+
+
 # ---------- payment webhook (real Razorpay path) ----------
 @app.post("/webhook/razorpay")
 async def razorpay_webhook(request: Request):
@@ -337,17 +411,55 @@ async def razorpay_webhook(request: Request):
     return {"ok": True, "note": "no matching pending order"}
 
 
+@app.post("/api/orders/{order_id}/simulate-payment")
+def simulate_payment(order_id: str):
+    """Demo helper: settle a real-mode order locally (no webhook needed)."""
+    cb = _PENDING_SETTLE.get(order_id)
+    payment_engine.simulate_payment(order_id, on_settled=cb, on_failed=None)
+    return {"ok": True}
+
+
 @app.get("/pay/{order_id}", response_class=HTMLResponse)
 def pay_page(order_id: str):
     order = payment_engine.get(order_id)
     if not order:
         return HTMLResponse("<h3>Unknown order</h3>", status_code=404)
+    real = payment_engine.mode == "razorpay_test"
+    pay_btn = ""
+    if real and order.get("provider_order_id"):
+        key_id = settings.razorpay_key_id
+        pay_btn = (
+            '<script src="https://checkout.razorpay.com/v1/checkout.js"></' + 'script>'
+            '<button class="rp" onclick="doPay()">Pay with Razorpay (test mode)</button>'
+            '<span id="rpNote" style="margin-top:12px;font-size:12px;color:#8a97ab">'
+            f"Settlement arrives via your Razorpay webhook ({settings.public_url}/webhook/razorpay). "
+            "No webhook set up? Use the button below to settle the demo locally.</span>"
+            "<script>"
+            f"function doPay() {{ var rzp = new Razorpay({{ key: '{key_id}', order_id: '{order['provider_order_id']}', "
+            f"amount: {int(order['amount'] * 100)}, currency: '{order['currency']}', name: 'Auxion Merchant', "
+            f"description: 'Order {order_id} (test mode)', handler: function (res) {{"
+            "document.getElementById('rpNote').textContent = 'Payment ' + res.razorpay_payment_id + ' captured. Waiting for webhook settlement...';}} }}); rzp.open(); }}"
+            "</" + "script>"
+        )
     return HTMLResponse(
-        f"<html><body style='font-family:sans-serif;padding:40px;background:#0b0e14;color:#e6ebf2'>"
-        f"<h2>Auxion Payment (simulated)</h2><p>Order <b>{order_id}</b> — "
-        f"₹{order['amount']:.0f} {order['currency']}</p><p>Status: <b>{order['status']}</b></p>"
-        f"<p>In simulated mode settlement fires automatically. A real Razorpay payment link "
-        f"would replace this page.</p></body></html>")
+        "<html><head><meta charset='utf-8'><title>Auxion Payment</title>"
+        "<style>body{font-family:ui-monospace,Menlo,monospace;background:#0b0d12;color:#e9edf5;padding:56px}"
+        ".box{max-width:440px;border:1px solid #232a3a;border-radius:8px;padding:28px;margin:0 auto}"
+        "h2{font-size:16px;letter-spacing:2px;margin:0 0 14px}.k{color:#8291a8;font-size:11px}"
+        ".v{font-size:22px;margin:2px 0 18px}.rp{background:#5b8cff;color:#fff;border:none;padding:12px 18px;"
+        "border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer;width:100%;margin-bottom:10px}"
+        ".sim{background:transparent;border:1px solid #232a3a;color:#8291a8;padding:10px;border-radius:6px;"
+        "font-family:inherit;font-size:12px;cursor:pointer;width:100%}</style></head>"
+        "<body><div class='box'>"
+        "<h2>AUXION · PAYMENT</h2>"
+        f"<div class='k'>ORDER</div><div class='v'>{order_id}</div>"
+        f"<div class='k'>AMOUNT</div><div class='v'>\u20b9{order['amount']:.0f} {order['currency']}</div>"
+        f"<div class='k'>STATUS</div><div class='v' style='font-size:14px'>{order['status']}</div>"
+        f"{pay_btn}"
+        "<button class='sim' onclick='settle()'>Settle locally (demo)</button>"
+        f"<script>async function settle() {{ await fetch('/api/orders/{order_id}/simulate-payment', {{method:'POST'}}); location.reload(); }}</" + "script>"
+        "</div></body></html>"
+    )
 
 
 # ---------- websocket ----------

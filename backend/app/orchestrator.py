@@ -35,6 +35,8 @@ class Session:
         self.pending: Optional[dict] = None
         self.recovery_armed = False
         self.created_at = time.time()
+        self.bundle_discount = 0.0     # active bundle saving applied at checkout
+        self.bundle_title: Optional[str] = None
 
     def cart_amount(self) -> float:
         return sum(i["qty"] * i["price"] for i in self.cart)
@@ -160,6 +162,8 @@ class Orchestrator:
                 return self._do_add(sess, proposal, trace)
             if intent == "remove":
                 return self._do_remove(sess, proposal, trace)
+            if intent == "accept_bundle":
+                return self._do_accept_bundle(sess, proposal, trace)
             if intent == "checkout":
                 return self._do_checkout(sess, trace=trace)
             return self._reply(sess, "I can help you search the catalog, build a cart, and place an order. "
@@ -244,6 +248,8 @@ class Orchestrator:
         pid = proposal.get("product_id")
         before = len(sess.cart)
         sess.cart = [c for c in sess.cart if c["product_id"] != pid]
+        if len(sess.cart) < before:
+            sess.bundle_discount = 0.0
         self._emit("cart_update", {"cart": sess.cart, "amount": sess.cart_amount(),
                                    "trace_id": trace.trace_id}, session_id=sess.session_id)
         if len(sess.cart) < before:
@@ -251,12 +257,61 @@ class Orchestrator:
                     "cart": sess.cart, "amount": sess.cart_amount(), "trace_id": trace.trace_id}
         return self._reply(sess, "That item wasn't in your cart.", trace)
 
+    def _do_accept_bundle(self, sess: Session, proposal: dict, trace) -> dict:
+        return self.accept_bundle(session_id=sess.session_id)
+
+    def accept_bundle(self, session_id: Optional[str] = None, tier: str = "unknown",
+                      token: Optional[str] = None) -> dict:
+        """One-click bundle accept: add the missing bundle items and apply the
+        bundle discount at checkout. Audited."""
+        sess = self.get_session(session_id, tier=tier, token=token)
+        offer = campaign_engine.bundle_offer(sess.cart)
+        if not offer:
+            return {"session_id": sess.session_id, "reply": "No bundle offer matches your current cart.",
+                    "error": "no_bundle_offer"}
+        added = []
+        for pid in offer["add"]:
+            prod = catalog.get(pid)
+            if prod and not any(c["product_id"] == pid for c in sess.cart):
+                sess.cart.append({"product_id": pid, "qty": 1, "price": prod["price"]})
+                added.append(prod["title"])
+        sess.bundle_discount = offer["save"]
+        sess.bundle_title = offer["title"]
+        audit.append("bundle_accepted",
+                     {"bundle": offer["bundle_id"], "added": added,
+                      "discount": offer["save"]}, session_id=sess.session_id)
+        self._emit("cart_update", {"cart": sess.cart, "amount": sess.cart_amount(),
+                                   "bundle": {**offer, "accepted": True},
+                                   "bundle_discount": sess.bundle_discount},
+                   session_id=sess.session_id)
+        msg = (f"Bundle '{offer['title']}' applied — added {', '.join(added)} at a total "
+               f"saving of \u20b9{offer['save']}. Cart total at checkout: \u20b9{max(0.0, sess.cart_amount() - offer['save']):.0f}. Say 'checkout' to place the order.")
+        self._emit("agent_reply", {"text": msg}, session_id=sess.session_id)
+        return {"session_id": sess.session_id, "reply": msg, "cart": sess.cart,
+                "amount": sess.cart_amount(), "bundle": {**offer, "accepted": True},
+                "bundle_discount": sess.bundle_discount}
+
+    def remove_from_cart(self, session_id: Optional[str], product_id: str) -> dict:
+        sess = self.get_session(session_id)
+        before = len(sess.cart)
+        sess.cart = [c for c in sess.cart if c["product_id"] != product_id]
+        if len(sess.cart) < before:
+            sess.bundle_discount = 0.0  # bundle no longer intact
+            self._emit("cart_update", {"cart": sess.cart, "amount": sess.cart_amount()},
+                       session_id=sess.session_id)
+            return {"session_id": sess.session_id, "removed": product_id,
+                    "cart": sess.cart, "amount": sess.cart_amount(),
+                    "reply": f"Removed {product_id}."}
+        return {"session_id": sess.session_id, "error": "not_in_cart"}
+
     def _do_checkout(self, sess: Session, confirmed: bool = False, trace=None) -> dict:
         if not sess.cart:
             return self._reply(sess, "Your cart is empty.", trace)
 
         amount = sess.cart_amount()
-        plan = {"items": list(sess.cart), "amount": amount}
+        discount = sess.bundle_discount if sess.bundle_discount else 0.0
+        total = max(0.0, amount - discount)
+        plan = {"items": list(sess.cart), "amount": total, "discount": discount}
 
         # 2) CRITIC (policy) — record action for velocity guard first
         policy_engine.record_action(sess.session_id)
@@ -344,6 +399,8 @@ class Orchestrator:
             self._emit("settled", {"order": _order_view(rec), "receipt": receipt,
                                    "stats": self.stats()}, session_id=sess.session_id)
             sess.cart = []
+            sess.bundle_discount = 0.0
+            sess.bundle_title = None
 
         def _on_failed(rec: dict):
             # graceful failure: mark failed, notify, keep cart so user can retry — no money lost

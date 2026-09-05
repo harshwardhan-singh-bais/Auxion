@@ -8,16 +8,24 @@ counterfactual, JWT scope, campaign attribution, and graceful payment failure.
 """
 from __future__ import annotations
 
+import os
 import time
+
+# Keep the core e2e checks deterministic and reproducible; the LLM fallback
+# chain gets its own live check (13/14) below.
+os.environ["AUXION_FORCE_DETERMINISTIC"] = "1"
 
 from app import db
 from app.audit import audit
 from app.auth import issue_token, verify_token
+from app.config import settings
 from app.orchestrator import orchestrator
 from app.payments import payment_engine
 from app.policy import policy_engine
 from app.selftest import run_self_test
 from app import receipts
+from app.llm import llm_chain
+from app.planner import plan as plan_direct, _PLANNER_TOOL, _planner_system
 
 
 def wait(cond, timeout=6.0):
@@ -110,6 +118,41 @@ def main():
     assert wait(lambda: (db.get_order(foid) or {}).get("status") == "failed"), "failure path did not mark failed"
     assert orchestrator.orders_settled == before_fail, "failed order wrongly counted as settled"
     print("[11] graceful payment failure ok -> order failed, no revenue booked")
+
+    # 12) one-click bundle accept: add 1 bundle item, accept, discount applied
+    sid5 = orchestrator.handle_message("buy a blue t-shirt")["session_id"]
+    r = orchestrator.accept_bundle(session_id=sid5)
+    assert r.get("cart") and len(r["cart"]) == 3, f"bundle accept did not complete cart: {r}"
+    assert r.get("bundle_discount", 0) > 0, "bundle discount not applied"
+    btitle = (r.get("bundle") or {}).get("title", "")
+    print(f"[12] bundle accept ok -> 3 items, saving {chr(8377)}{r['bundle_discount']:.0f} ('{btitle}')")
+
+    # 13) LLM fallback chain (LIVE when providers configured)
+    settings.force_deterministic = False
+    try:
+        plan = plan_direct("find a blue t-shirt under 800")
+        assert plan.get("intent") in ("search", "add", "help", "recommend", "checkout", "remove", "accept_bundle"), \
+            f"live LLM plan had bad intent: {plan.get('intent')}"
+        note = f" (llm note: {plan['_llm_error'][:80]})" if plan.get("_llm_error") else ""
+        print(f"[13] LLM fallback chain LIVE ok -> intent={plan['intent']} via {plan.get('_source')}{note}")
+    finally:
+        settings.force_deterministic = True
+
+    # 14) LLM failover error surfacing: every layer fails -> clean report
+    saved_keys = dict(settings.llm_keys)
+    saved_ollama = settings.llm_bases["ollama"]
+    settings.llm_keys = {k: "sk-invalid-key-for-test" for k in settings.llm_keys}
+    settings.llm_bases["ollama"] = "http://127.0.0.1:9"
+    settings.force_deterministic = False
+    try:
+        bad_plan, report = llm_chain.propose_action(_planner_system(), "hi", _PLANNER_TOOL, "propose_action")
+        assert bad_plan is None, "expected no plan when all providers fail"
+        assert report["error"] and "deterministic" in report["error"], f"bad failover report: {report}"
+        print(f"[14] LLM failover errors ok -> {len(report['attempts'])} attempts, surfaced: {report['error'][:90]}...")
+    finally:
+        settings.llm_keys = saved_keys
+        settings.llm_bases["ollama"] = saved_ollama
+        settings.force_deterministic = True
 
     print("\nALL SMOKE TESTS PASSED ✅")
 

@@ -29,6 +29,7 @@ class PaymentEngine:
     def __init__(self):
         self._orders: dict[str, dict] = {}
         self._use_real = settings.has_razorpay
+        self._force_sim = False        # runtime override: force simulated even with keys
         self._client = None
         self.fail_next = False          # inject one failure for the graceful-failure demo
         if self._use_real:
@@ -39,8 +40,15 @@ class PaymentEngine:
                 self._use_real = False
 
     @property
+    def _real(self) -> bool:
+        return self._use_real and not self._force_sim
+
+    def set_forced_simulated(self, on: bool) -> None:
+        self._force_sim = bool(on)
+
+    @property
     def mode(self) -> str:
-        return "razorpay_test" if self._use_real else "simulated"
+        return "razorpay_test" if self._real else "simulated"
 
     def create_order(self, session_id: str, amount: float, currency: str, items: list[dict], merchant: str) -> dict:
         order_id = "order_" + uuid.uuid4().hex[:14]
@@ -50,7 +58,7 @@ class PaymentEngine:
             "status": CREATED, "created_at": time.time(), "mode": self.mode,
             "events": [{"state": CREATED, "ts": time.time()}],
         }
-        if self._use_real and self._client:
+        if self._real and self._client:
             try:
                 rp = self._client.order.create({
                     "amount": int(amount * 100), "currency": currency,
@@ -125,7 +133,7 @@ class PaymentEngine:
         rec["status"] = REFUNDED
         rec["refund_ref"] = "rfnd_" + uuid.uuid4().hex[:12]
         rec.setdefault("events", []).append({"state": REFUNDED, "ts": time.time()})
-        if self._use_real and self._client and rec.get("payment_ref"):
+        if self._real and self._client and rec.get("payment_ref"):
             try:
                 self._client.payment.refund(rec["payment_ref"], {"amount": int(rec["amount"] * 100)})
             except Exception as e:

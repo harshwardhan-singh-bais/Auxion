@@ -3,133 +3,326 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Auxion — Agentic Commerce for the Agent Economy</title>
+<title>Auxion — The merchant agent that sells to AI buyers</title>
+<meta name="description" content="Auxion is a conversational commerce agent with a deterministic safety spine. Every money action is explainable, bounded, gated, and hash-chain audited. Humans and autonomous AI agents check out through the exact same guarded pipeline."/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B0D10'/%3E%3Cpath d='M10 23 16 8l6 15M12.4 18h7.2' stroke='%235ECFAE' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
-  :root{--bg:#0a0d13;--panel:#121622;--line:#222b3c;--text:#e8edf5;--muted:#8b98ad;
-        --accent:#5b8cff;--accent2:#9d5bff;--good:#3ddc84;}
-  [data-theme="light"]{--bg:#f6f8fc;--panel:#fff;--line:#e3e9f3;--text:#141925;--muted:#5a6577;
-        --accent:#2f6bff;--accent2:#7c3aed;--good:#12a150;}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);
-       color:var(--text);line-height:1.6;overflow-x:hidden}
-  .nav{display:flex;align-items:center;gap:14px;padding:18px 40px;border-bottom:1px solid var(--line);
-       position:sticky;top:0;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);z-index:10}
-  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
-  .nav h1{font-size:20px;letter-spacing:1px}
-  .nav .grow{flex:1}
-  .btn{padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
-       color:var(--text);cursor:pointer;text-decoration:none;font-size:14px;font-weight:600;display:inline-block}
-  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff}
-  .hero{padding:90px 40px 60px;text-align:center;max-width:900px;margin:0 auto}
-  .hero .tag{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:20px;
-             color:var(--muted);font-size:13px;margin-bottom:24px}
-  .hero h2{font-size:52px;line-height:1.1;letter-spacing:-1px;margin-bottom:20px}
-  .hero h2 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;
-               background-clip:text;-webkit-text-fill-color:transparent}
-  .hero p{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 32px}
-  .cta{display:flex;gap:14px;justify-content:center}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
-        max-width:1100px;margin:40px auto;padding:0 40px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px}
-  .card .ico{width:44px;height:44px;border-radius:11px;background:color-mix(in srgb,var(--accent) 18%,transparent);
-             display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
-  .card h3{font-size:17px;margin-bottom:8px}
-  .card p{color:var(--muted);font-size:14px}
-  .flow{max-width:1000px;margin:70px auto;padding:0 40px;text-align:center}
-  .flow h3{font-size:30px;margin-bottom:10px}
-  .flow .sub{color:var(--muted);margin-bottom:36px}
-  .pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center}
-  .stage{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);padding:22px;position:relative}
-  .stage:first-child{border-radius:14px 0 0 14px}
-  .stage:last-child{border-radius:0 14px 14px 0}
-  .stage .n{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:1px}
-  .stage h4{font-size:18px;margin:8px 0}
-  .stage p{color:var(--muted);font-size:13px}
-  .arrow{display:flex;align-items:center;color:var(--accent);font-size:24px;padding:0 4px}
-  .stats-strip{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin:50px auto;padding:0 40px}
-  .stat{text-align:center}
-  .stat .v{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));
-           -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .stat .k{color:var(--muted);font-size:13px}
-  footer{text-align:center;padding:50px 40px;color:var(--muted);border-top:1px solid var(--line);margin-top:60px}
-  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
-  .chip{padding:5px 12px;border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--muted)}
+:root{
+  --bg:#0B0D10; --panel:#111418; --panel-2:#161A20; --panel-3:#1C2129;
+  --line:#252B34; --line-soft:rgba(237,238,233,.06);
+  --text:#EDEEE9; --muted:#8D949E; --faint:#5C636D;
+  --accent:#5ECFAE; --accent-ink:#08251D; --accent-dim:rgba(94,207,174,.12);
+  --good:#4CC38A; --warn:#E0A83F; --bad:#E2606A;
+  --font-ui:'Manrope',system-ui,-apple-system,sans-serif;
+  --font-display:'Instrument Serif',Georgia,serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --shadow:0 24px 60px -24px rgba(0,0,0,.55);
+}
+[data-theme="light"]{
+  --bg:#F4F3EE; --panel:#FBFAF7; --panel-2:#EFEDE6; --panel-3:#E7E4DA;
+  --line:#DCD9CD; --line-soft:rgba(27,29,32,.07);
+  --text:#1B1D20; --muted:#63686F; --faint:#989EA5;
+  --accent:#0E7C66; --accent-ink:#F2FBF8; --accent-dim:rgba(14,124,102,.09);
+  --good:#1E8E5A; --warn:#9A6D1B; --bad:#C03A46;
+  --shadow:0 24px 50px -28px rgba(27,29,32,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);line-height:1.55;
+     font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+     font-variant-numeric:tabular-nums}
+/* ambient light + grain */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(900px 520px at 12% -8%,var(--accent-dim),transparent 62%)}
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+[data-theme="light"] body::after{opacity:.05}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.mono{font-family:var(--font-mono)}
+
+/* nav — floating glass pill */
+nav{position:sticky;top:14px;z-index:20;display:flex;justify-content:center;padding:0 20px}
+.navpill{display:flex;align-items:center;gap:18px;width:100%;max-width:1160px;
+  padding:10px 12px 10px 20px;border-radius:999px;border:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(14px);
+  box-shadow:var(--shadow)}
+.wordmark{display:flex;flex-direction:column;line-height:1.05}
+.wordmark b{font-weight:800;font-size:14px;letter-spacing:.14em}
+.wordmark span{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.24em;color:var(--faint)}
+.navlinks{display:flex;gap:4px;margin-left:auto}
+.navlinks a{font-size:13px;font-weight:600;color:var(--muted);padding:8px 13px;border-radius:999px;
+  transition:color .25s var(--ease),background .25s var(--ease)}
+.navlinks a:hover{color:var(--text);background:var(--line-soft)}
+.navlive{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;
+  letter-spacing:.08em;color:var(--muted);padding:7px 11px;border:1px solid var(--line-soft);
+  border-radius:999px;white-space:nowrap}
+.navlive i{width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good);
+  animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#themeToggle{width:34px;height:34px;border-radius:999px;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;
+  transition:color .2s var(--ease),border-color .2s var(--ease)}
+#themeToggle:hover{color:var(--text);border-color:var(--accent)}
+/* hero */
+.hero{padding:110px 0 84px}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:10.5px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:7px 14px;
+  border:1px solid var(--line-soft);border-radius:999px;background:var(--panel)}
+.kicker b{color:var(--accent);font-weight:500}
+.hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(52px,7.6vw,96px);
+  line-height:1.02;letter-spacing:-.015em;margin:34px 0 0;max-width:15ch;text-wrap:balance}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero .sub{font-size:16.5px;color:var(--muted);max-width:58ch;margin:30px 0 40px;line-height:1.7}
+.cta{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-ui);font-weight:700;
+  font-size:14px;padding:13px 22px;border-radius:999px;border:1px solid var(--line);
+  background:var(--panel);color:var(--text);cursor:pointer;user-select:none;
+  transition:transform .2s var(--ease),background .25s var(--ease),border-color .25s var(--ease)}
+.btn:active{transform:scale(.975)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary .ic{display:grid;place-items:center;width:26px;height:26px;border-radius:999px;
+  background:rgba(0,0,0,.14);font-size:12px;transition:transform .25s var(--ease)}
+[data-theme="light"] .btn.primary .ic{background:rgba(255,255,255,.22)}
+.btn.primary:hover .ic{transform:translateX(2px)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.textlink{font-size:13.5px;font-weight:600;color:var(--muted);display:inline-flex;gap:7px;align-items:center;
+  transition:color .2s var(--ease)}
+.textlink:hover{color:var(--accent)}
+
+/* live stat band */
+.band{margin-top:88px;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line-soft);
+  border-radius:18px;background:var(--panel);overflow:hidden;box-shadow:var(--shadow)}
+.band .cell{padding:30px 30px 26px;border-right:1px solid var(--line-soft);position:relative}
+.band .cell:last-child{border-right:none}
+.band .k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);display:flex;align-items:center;gap:8px}
+.band .v{font-family:var(--font-mono);font-size:clamp(24px,2.6vw,32px);font-weight:500;margin-top:12px;
+  letter-spacing:-.02em;transition:color .3s var(--ease)}
+.band .v.ok{color:var(--good)}
+.band .v.tick{animation:valtick .5s var(--ease)}
+@keyframes valtick{0%{opacity:.2;transform:translateY(4px)}100%{opacity:1;transform:none}}
+
+/* sections */
+section{padding:96px 0 88px}
+.sechead{display:flex;align-items:baseline;gap:16px;margin-bottom:18px}
+.sechead .n{font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+.sechead h2{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,4vw,46px);letter-spacing:-.01em}
+.subsec{color:var(--muted);font-size:15px;max-width:62ch;margin-bottom:56px;line-height:1.7}
+
+/* bento capability grid */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.bcard{border:1px solid var(--line-soft);border-radius:18px;background:var(--panel);padding:30px 28px 32px;
+  display:flex;flex-direction:column;gap:12px;min-height:220px;
+  transition:transform .3s var(--ease),border-color .3s var(--ease),background .3s var(--ease)}
+.bcard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+  background:var(--panel-2)}
+.bcard.big{grid-column:span 4}.bcard.mid{grid-column:span 2}.bcard.wide{grid-column:span 6;min-height:150px}
+.bcard .idx{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--accent)}
+.bcard h3{font-size:19px;font-weight:700;letter-spacing:-.01em;margin-top:auto}
+.bcard p{color:var(--muted);font-size:13.5px;line-height:1.7}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;position:relative}
+.pstep{border:1px solid var(--line-soft);border-radius:18px;background:var(--panel);padding:32px 30px;
+  position:relative;overflow:hidden}
+.pstep::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--accent),transparent 70%);opacity:.6}
+.pstep .n{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--accent)}
+.pstep h4{font-family:var(--font-display);font-weight:400;font-size:30px;margin:14px 0 10px;letter-spacing:-.01em}
+.pstep p{color:var(--muted);font-size:13.5px;line-height:1.7}
+.parrow{position:absolute;top:50%;transform:translateY(-50%);color:var(--faint);font-family:var(--font-mono);z-index:3}
+
+/* protocols */
+.proto{display:flex;gap:10px;flex-wrap:wrap}
+.pbadge{font-family:var(--font-mono);font-size:11.5px;padding:9px 16px;border:1px solid var(--line-soft);
+  border-radius:999px;color:var(--muted);background:var(--panel);transition:border-color .25s var(--ease),color .25s var(--ease)}
+.pbadge:hover{border-color:var(--accent);color:var(--text)}
+.pbadge b{color:var(--accent);font-weight:500}
+
+/* footer */
+footer{border-top:1px solid var(--line-soft);padding:40px 0 52px;margin-top:40px}
+footer .in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+footer .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--faint)}
+footer .r{display:flex;gap:22px}
+footer .r a{font-size:12.5px;font-weight:600;color:var(--muted);transition:color .2s var(--ease)}
+footer .r a:hover{color:var(--accent)}
+
+/* motion */
+.rv{opacity:0;transform:translateY(22px);filter:blur(6px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease),filter .8s var(--ease)}
+.rv.in{opacity:1;transform:none;filter:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}}
+
+@media (max-width:960px){
+  .band{grid-template-columns:1fr 1fr}
+  .band .cell:nth-child(2){border-right:none}
+  .band .cell:nth-child(-n+2){border-bottom:1px solid var(--line-soft)}
+  .bcard.big,.bcard.mid{grid-column:span 3}
+  .pipe{grid-template-columns:1fr}
+  .parrow{display:none}
+  .navlinks{display:none}
+  .hero{padding:72px 0 60px}
+  section{padding:72px 0}
+}
+@media (max-width:620px){
+  .bcard.big,.bcard.mid{grid-column:span 6}
+  .navlive{display:none}
+}
 </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="logo"></div><h1>AUXION</h1>
-    <div class="grow"></div>
-    <span class="chip">Track 01 · AI Growth &amp; Agentic Commerce</span>
-    <a class="btn primary" href="/app">Open Control Room →</a>
-  </nav>
+<nav><div class="navpill">
+  <a class="wordmark" href="/">AUXION<span>AGENTIC COMMERCE</span></a>
+  <div class="navlinks">
+    <a href="#capability">Capability</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#protocol">Protocol</a>
+  </div>
+  <div class="navlive"><i></i><span id="navLive">connecting…</span></div>
+  <button id="themeToggle" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  <a class="btn primary" href="/app">Control Room <span class="ic">→</span></a>
+</div></nav>
 
-  <section class="hero">
-    <div class="tag">⚡ Built on Razorpay test-mode · ACP / AP2 / x402-ready</div>
-    <h2>The merchant agent that <span>grows revenue</span> and sells to <span>AI buyers</span>.</h2>
-    <p>Auxion is a conversational commerce agent with a deterministic safety spine. Every money action is
-       explainable, bounded, gated, and hash-chain audited. Humans and autonomous AI agents check out
-       through the exact same guarded pipeline.</p>
-    <div class="cta">
-      <a class="btn primary" href="/app">Launch Dashboard</a>
-      <a class="btn" href="/.well-known/agent-commerce.json" target="_blank">View Agent Manifest</a>
-    </div>
-    <div class="badges">
-      <span class="chip">Planner → Critic → Executor</span>
-      <span class="chip">Hash-chained audit</span>
-      <span class="chip">Signed receipts</span>
-      <span class="chip">Trust tiers + JWT scope</span>
-      <span class="chip">MCP tool server</span>
-      <span class="chip">Cart recovery + upsell</span>
-    </div>
-  </section>
-
-  <div class="stats-strip">
-    <div class="stat"><div class="v" id="s-rev">₹—</div><div class="k">Settled revenue</div></div>
-    <div class="stat"><div class="v" id="s-orders">—</div><div class="k">Orders settled</div></div>
-    <div class="stat"><div class="v" id="s-rec">₹—</div><div class="k">Cart recovered</div></div>
-    <div class="stat"><div class="v" id="s-mode">—</div><div class="k">Payment mode</div></div>
+<main>
+<header class="hero wrap">
+  <div class="kicker rv"><b>NPCI UAP</b> · ACP · AP2 · x402 · Razorpay test-mode</div>
+  <h1 class="rv" style="transition-delay:.08s">The merchant agent that <em>grows revenue</em> — and sells to AI buyers.</h1>
+  <p class="sub rv" style="transition-delay:.16s">Auxion is a conversational commerce agent with a deterministic safety spine.
+     Every money action is explainable, bounded, gated, and hash-chain audited. Humans and autonomous AI
+     agents check out through the exact same guarded pipeline.</p>
+  <div class="cta rv" style="transition-delay:.24s">
+    <a class="btn primary" href="/app">Open the control room <span class="ic">→</span></a>
+    <a class="textlink" href="/.well-known/agent-commerce.json" target="_blank">Read the agent manifest ↗</a>
   </div>
 
-  <section class="grid">
-    <div class="card"><div class="ico">🧠</div><h3>LLM proposes, code decides</h3>
-      <p>The model only extracts intent and proposes structured actions. Deterministic Python moves money — never the model.</p></div>
-    <div class="card"><div class="ico">🛡️</div><h3>Bounded &amp; gated</h3>
-      <p>Trust tiers, amount ceilings, velocity guards, stock checks and risk scoring gate every order. Edit policy live in YAML.</p></div>
-    <div class="card"><div class="ico">🔗</div><h3>Hash-chained audit</h3>
-      <p>Append-only log where each entry chains to the previous hash. Tamper anywhere and verification breaks. Export CSV/JSON.</p></div>
-    <div class="card"><div class="ico">🤖</div><h3>Agent-to-agent</h3>
-      <p>Discoverable <code>/.well-known/agent-commerce.json</code> + MCP tools let any compatible AI buyer shop autonomously.</p></div>
-    <div class="card"><div class="ico">📈</div><h3>Revenue growth</h3>
-      <p>Cart-recovery campaigns, cross-sell and bundle offers grow merchant revenue — attributed and tracked live.</p></div>
-    <div class="card"><div class="ico">🧯</div><h3>Graceful failure</h3>
-      <p>Inject a payment failure and watch the pipeline mark it failed, preserve the cart, and refund cleanly. No money lost.</p></div>
-  </section>
+  <div class="band rv" style="transition-delay:.32s">
+    <div class="cell"><div class="k">settled revenue</div><div class="v" id="s-rev">₹0</div></div>
+    <div class="cell"><div class="k">orders settled</div><div class="v" id="s-orders">0</div></div>
+    <div class="cell"><div class="k">cart recovered</div><div class="v" id="s-rec">₹0</div></div>
+    <div class="cell"><div class="k">payment mode</div><div class="v ok" id="s-mode">—</div></div>
+  </div>
+</header>
 
-  <section class="flow">
-    <h3>Every money action, one guarded pipeline</h3>
-    <div class="sub">The same path for a human typing in chat and an autonomous AI buyer.</div>
-    <div class="pipe">
-      <div class="stage"><div class="n">① PLANNER</div><h4>Intent</h4><p>LLM / rules turn language into a structured proposal.</p></div>
-      <div class="arrow">→</div>
-      <div class="stage"><div class="n">② CRITIC</div><h4>Policy + Risk</h4><p>Deterministic gates: tiers, ceilings, stock, velocity, risk score.</p></div>
-      <div class="arrow">→</div>
-      <div class="stage"><div class="n">③ EXECUTOR</div><h4>Settlement</h4><p>Razorpay order → link → webhook → signed receipt.</p></div>
+<section class="wrap" id="capability">
+  <div class="sechead rv"><span class="n">01</span><h2>Capability</h2></div>
+  <p class="subsec rv">A full growth surface on one guarded spine: discovery, intent, gated execution, and revenue
+  attribution for every campaign the agent runs.</p>
+  <div class="bento">
+    <div class="bcard big rv"><span class="idx">PLANNER → CRITIC → EXECUTOR</span>
+      <h3>LLM proposes. Code decides.</h3>
+      <p>The model only extracts intent over a failover chain of providers — Groq to local Ollama. Deterministic Python moves money. Never the model.</p></div>
+    <div class="bcard mid rv" style="transition-delay:.06s"><span class="idx">POLICY ENGINE</span>
+      <h3>Bounded &amp; gated</h3>
+      <p>Trust tiers, amount ceilings, velocity guards, stock checks and risk scoring gate every order. Policy edits live in YAML, hot-swapped at runtime.</p></div>
+    <div class="bcard mid rv"><span class="idx">APPEND-ONLY</span>
+      <h3>Hash-chained audit</h3>
+      <p>Each entry chains to the previous hash. Tamper anywhere and verification breaks. Export CSV or JSON at will.</p></div>
+    <div class="bcard mid rv" style="transition-delay:.06s"><span class="idx">AGENT-TO-AGENT</span>
+      <h3>Discoverable by machines</h3>
+      <p>A well-known manifest plus MCP tools let any compatible AI buyer shop autonomously — same gates, same audit.</p></div>
+    <div class="bcard mid rv" style="transition-delay:.12s"><span class="idx">REVENUE GROWTH</span>
+      <h3>Cart recovery &amp; upsell</h3>
+      <p>Idle carts trigger recovery campaigns; cross-sell and one-click bundle offers grow merchant revenue — attributed and tracked.</p></div>
+    <div class="bcard wide rv"><span class="idx">THE BAR</span>
+      <h3>One failure, handled gracefully</h3>
+      <p>Arm a payment failure and watch the pipeline mark the order failed, preserve the cart, book zero revenue, log a graceful recovery — and keep selling. No money lost, no state corrupted, nothing unexplained.</p></div>
+  </div>
+</section>
+
+<section class="wrap" id="pipeline">
+  <div class="sechead rv"><span class="n">02</span><h2>One guarded pipeline</h2></div>
+  <p class="subsec rv">The same path for a human typing in chat and an autonomous AI buyer walking in over the manifest.</p>
+  <div class="pipe">
+    <span class="parrow" style="left:33.3%;margin-left:-8px">→</span>
+    <span class="parrow" style="left:66.6%;margin-left:-8px">→</span>
+    <div class="pstep rv"><div class="n">STAGE 01</div><h4>Planner</h4>
+      <p>Language in, structured proposal out. LLM failover chain with a deterministic last resort. Zero keys, still runs.</p></div>
+    <div class="pstep rv" style="transition-delay:.08s"><div class="n">STAGE 02</div><h4>Critic</h4>
+      <p>Deterministic gates: trust tiers, ceilings, stock, velocity, risk score. Allow, deny, or escalate to a human.</p></div>
+    <div class="pstep rv" style="transition-delay:.16s"><div class="n">STAGE 03</div><h4>Executor</h4>
+      <p>Razorpay order → link → webhook → settlement → signed, verifiable receipt. Every step hash-chained.</p></div>
+  </div>
+</section>
+
+<section class="wrap" id="protocol">
+  <div class="sechead rv"><span class="n">03</span><h2>Protocol surface</h2></div>
+  <p class="subsec rv">Built for the agent-to-agent commerce race: NPCI UAP, ACP, AP2, x402.</p>
+  <div class="proto rv">
+    <span class="pbadge"><b>auxion-agent-commerce/0.1</b>&nbsp; manifest</span>
+    <span class="pbadge">MCP tools</span>
+    <span class="pbadge">JWT-scoped buyer tokens</span>
+    <span class="pbadge">HMAC signed receipts</span>
+    <span class="pbadge">Razorpay test-mode</span>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap in">
+    <span class="l">AUXION · TRACK 01 · AI GROWTH &amp; AGENTIC COMMERCE</span>
+    <div class="r">
+      <a href="/app">Control room</a>
+      <a href="/.well-known/agent-commerce.json" target="_blank">Manifest</a>
+      <a href="/mcp/client.json" target="_blank">MCP client</a>
     </div>
-  </section>
-
-  <footer>
-    Auxion · Agentic Commerce Control Room — <a href="/app" style="color:var(--accent)">open the dashboard</a> ·
-    manifest at <a href="/.well-known/agent-commerce.json" style="color:var(--accent)">/.well-known/agent-commerce.json</a>
-  </footer>
+  </div>
+</footer>
 
 <script>
-  fetch('/api/stats').then(r=>r.json()).then(s=>{
-    document.getElementById('s-rev').textContent = '₹'+Math.round(s.revenue||0);
-    document.getElementById('s-orders').textContent = s.orders_settled||0;
-    document.getElementById('s-rec').textContent = '₹'+Math.round(s.recovered||0);
-    document.getElementById('s-mode').textContent = s.payment_mode||'—';
-  }).catch(()=>{});
+/* theme */
+(function(){
+  const saved = localStorage.getItem('auxion-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  const b = document.getElementById('themeToggle');
+  b.onclick = () => {
+    const h = document.documentElement;
+    h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('auxion-theme', h.dataset.theme);
+  };
+})();
+
+/* scroll reveal */
+(function(){
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  }), {threshold:.12});
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
+})();
+
+/* live stats over websocket — same feed as the control room */
+const $ = id => document.getElementById(id);
+const fmt = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+function setV(id, v){
+  const el = $(id);
+  if (el.textContent !== v){ el.textContent = v; el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); }
+}
+function paint(s){
+  if (!s) return;
+  setV('s-rev', fmt(s.revenue));
+  setV('s-orders', String(s.orders_settled || 0));
+  setV('s-rec', fmt(s.recovered));
+  setV('s-mode', s.payment_mode ? String(s.payment_mode).toUpperCase() : '—');
+  $('navLive').textContent = s.kill_switch ? 'halted' : 'live · watching';
+}
+let ws = null, dead = false;
+function connect(){
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(proto + '://' + location.host + '/ws');
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    if (m.type === 'snapshot' || m.stats) paint(m.stats);
+    if (m.type === 'kill_switch') paint({kill_switch: m.engaged, payment_mode: '—'});
+  };
+  ws.onclose = () => { if (!dead) setTimeout(connect, 2000); };
+}
+/* initial poll, then live via WS */
+fetch('/api/stats').then(r => r.json()).then(paint).catch(() => {});
+connect();
 </script>
 </body>
 </html>

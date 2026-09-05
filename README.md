@@ -6,7 +6,8 @@ flows **Planner → Critic/Policy → Executor**, is risk-scored, policy-gated, 
 into an append-only audit log, and settled with a signed, verifiable receipt.
 
 Runs with **zero API keys** (deterministic planner + simulated payments). Add keys to
-upgrade to real Claude reasoning and Razorpay test-mode payments.
+upgrade to real LLM reasoning (provider failover chain: Groq → SambaNova → Mistral →
+Cerebras → NVIDIA → Nemotron → OpenRouter → Ollama) and Razorpay test-mode payments.
 
 ## What's built (the spine — Tier 1 + key differentiators)
 
@@ -68,7 +69,7 @@ cd backend
 ## Upgrade paths (optional)
 
 Copy `.env.example` → `.env` and fill in:
-- `ANTHROPIC_API_KEY` → Planner uses Claude tool-calling for intent extraction.
+- **LLM failover chain** (`llm.py`) — Planner uses the first healthy provider from the chain (Groq → SambaNova → Mistral → Cerebras → NVIDIA → Nemotron → OpenRouter → Ollama); every failure drops to the next layer, and the deterministic parser is the last resort. No Anthropic dependency.
 - `RAZORPAY_KEY_ID` / `_SECRET` / `_WEBHOOK_SECRET` → real test-mode orders; point Razorpay webhook at `/(ngrok)/webhook/razorpay`.
 - `AUXION_SIGNING_KEY` → stable receipt signature verification across runs.
 - `AUXION_PUBLIC_URL` → your ngrok URL for webhook delivery.
