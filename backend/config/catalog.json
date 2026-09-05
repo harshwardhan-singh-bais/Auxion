@@ -1,24 +1,53 @@
 {
-  "merchant": {
-    "id": "auxion-demo-store",
-    "name": "Auxion Demo Store",
-    "currency": "INR"
-  },
-  "products": [
-    { "id": "tshirt-blue",   "title": "Blue Cotton T-Shirt",   "price": 699,  "category": "apparel",     "tags": ["blue", "tshirt", "cotton", "casual"], "stock": 40 },
-    { "id": "tshirt-black",  "title": "Black Graphic T-Shirt",  "price": 799,  "category": "apparel",     "tags": ["black", "tshirt", "graphic"],         "stock": 25 },
-    { "id": "jeans-slim",    "title": "Slim Fit Jeans",         "price": 1899, "category": "apparel",     "tags": ["jeans", "denim", "slim"],             "stock": 15 },
-    { "id": "cap-navy",      "title": "Navy Baseball Cap",      "price": 349,  "category": "accessories", "tags": ["cap", "navy", "hat"],                 "stock": 60 },
-    { "id": "socks-3pack",   "title": "Cotton Socks (3 Pack)",  "price": 299,  "category": "accessories", "tags": ["socks", "cotton", "bundle"],          "stock": 100 },
-    { "id": "sneaker-white", "title": "White Canvas Sneakers",  "price": 2499, "category": "footwear",    "tags": ["sneakers", "white", "canvas"],        "stock": 20 },
-    { "id": "belt-brown",    "title": "Brown Leather Belt",     "price": 899,  "category": "accessories", "tags": ["belt", "brown", "leather"],           "stock": 30 },
-    { "id": "hoodie-grey",   "title": "Grey Pullover Hoodie",   "price": 1599, "category": "apparel",     "tags": ["hoodie", "grey", "warm"],             "stock": 18 }
-  ],
-  "cross_sell": {
-    "tshirt-blue":   ["cap-navy", "socks-3pack"],
-    "tshirt-black":  ["cap-navy", "socks-3pack"],
-    "jeans-slim":    ["belt-brown", "sneaker-white"],
-    "sneaker-white": ["socks-3pack"],
-    "hoodie-grey":   ["cap-navy"]
+  "merchants": {
+    "auxion-demo-store": {
+      "merchant": {
+        "id": "auxion-demo-store",
+        "name": "Auxion Apparel Co.",
+        "currency": "INR"
+      },
+      "products": [
+        { "id": "tshirt-blue",   "title": "Blue Cotton T-Shirt",   "price": 699,  "category": "apparel",     "tags": ["blue", "tshirt", "t-shirt", "cotton", "casual"], "stock": 40 },
+        { "id": "tshirt-black",  "title": "Black Graphic T-Shirt",  "price": 799,  "category": "apparel",     "tags": ["black", "tshirt", "t-shirt", "graphic"],         "stock": 25 },
+        { "id": "jeans-slim",    "title": "Slim Fit Jeans",         "price": 1899, "category": "apparel",     "tags": ["jeans", "denim", "slim", "pants"],               "stock": 15 },
+        { "id": "cap-navy",      "title": "Navy Baseball Cap",      "price": 349,  "category": "accessories", "tags": ["cap", "navy", "hat"],                            "stock": 60 },
+        { "id": "socks-3pack",   "title": "Cotton Socks (3 Pack)",  "price": 299,  "category": "accessories", "tags": ["socks", "cotton", "bundle"],                     "stock": 100 },
+        { "id": "sneaker-white", "title": "White Canvas Sneakers",  "price": 2499, "category": "footwear",    "tags": ["sneakers", "shoes", "white", "canvas"],          "stock": 20 },
+        { "id": "belt-brown",    "title": "Brown Leather Belt",     "price": 899,  "category": "accessories", "tags": ["belt", "brown", "leather"],                      "stock": 30 },
+        { "id": "hoodie-grey",   "title": "Grey Pullover Hoodie",   "price": 1599, "category": "apparel",     "tags": ["hoodie", "grey", "warm", "sweatshirt"],          "stock": 18 }
+      ],
+      "cross_sell": {
+        "tshirt-blue":   ["cap-navy", "socks-3pack"],
+        "tshirt-black":  ["cap-navy", "socks-3pack"],
+        "jeans-slim":    ["belt-brown", "sneaker-white"],
+        "sneaker-white": ["socks-3pack"],
+        "hoodie-grey":   ["cap-navy"]
+      },
+      "bundles": [
+        { "id": "starter-fit", "title": "Starter Fit Bundle", "product_ids": ["tshirt-blue", "jeans-slim", "cap-navy"], "discount_pct": 12 }
+      ]
+    },
+    "auxion-gadgets": {
+      "merchant": {
+        "id": "auxion-gadgets",
+        "name": "Auxion Gadgets",
+        "currency": "INR"
+      },
+      "products": [
+        { "id": "buds-pro",    "title": "Wireless Earbuds Pro",  "price": 2999, "category": "audio",   "tags": ["earbuds", "wireless", "audio", "bluetooth"], "stock": 30 },
+        { "id": "charger-65w", "title": "65W USB-C Charger",     "price": 1299, "category": "power",   "tags": ["charger", "usb-c", "fast", "power"],         "stock": 50 },
+        { "id": "cable-usbc",  "title": "USB-C Cable (2m)",      "price": 399,  "category": "power",   "tags": ["cable", "usb-c", "wire"],                    "stock": 200 },
+        { "id": "case-clear",  "title": "Clear Phone Case",      "price": 499,  "category": "cases",   "tags": ["case", "clear", "phone"],                    "stock": 80 },
+        { "id": "powerbank",   "title": "10000mAh Power Bank",   "price": 1799, "category": "power",   "tags": ["powerbank", "battery", "power"],             "stock": 40 }
+      ],
+      "cross_sell": {
+        "buds-pro":    ["case-clear", "cable-usbc"],
+        "charger-65w": ["cable-usbc"],
+        "powerbank":   ["cable-usbc"]
+      },
+      "bundles": [
+        { "id": "power-kit", "title": "Power Kit", "product_ids": ["charger-65w", "cable-usbc", "powerbank"], "discount_pct": 10 }
+      ]
+    }
   }
 }

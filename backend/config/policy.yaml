@@ -9,15 +9,16 @@ global:
   currency: "INR"
   blocked_categories: []             # e.g. ["restricted"] to deny an entire category
   require_confirmation_above: 20000  # orders above this need explicit human approval
+  velocity_max_orders_per_min: 6     # rate guard per session (graceful failure demo)
 
-# Trust tiers. New/unknown agents land in "unknown"; upgrade via header/JWT claim later.
+# Trust tiers. New/unknown agents land in "unknown"; upgrade via JWT claim.
 tiers:
   unknown:
     description: "First-seen or unauthenticated agent. Tight caps."
     max_transaction_amount: 2000
     max_items_per_order: 3
-    allow_auto_execute: true         # can pass policy without human, up to caps
-    risk_tolerance: 0.55             # max risk score allowed to auto-execute
+    allow_auto_execute: true
+    risk_tolerance: 0.55
   trusted:
     description: "Verified/returning agent with signed token."
     max_transaction_amount: 15000
@@ -33,7 +34,7 @@ tiers:
 
 # Risk scoring weights (0..1 contribution, summed then clamped to 1.0).
 risk_weights:
-  high_value: 0.4        # order value near tier ceiling
-  new_agent: 0.25        # unknown tier
-  unusual_quantity: 0.2  # many units of one SKU
-  low_stock: 0.15        # buying near/over available stock
+  high_value: 0.4
+  new_agent: 0.25
+  unusual_quantity: 0.2
+  low_stock: 0.15
