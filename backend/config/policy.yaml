@@ -1,0 +1,39 @@
+# Auxion merchant policy — hot-swappable. Edit and save; the engine reloads on next action.
+# Trust tiers gate how much autonomy an agent/session gets.
+
+version: 3
+
+# Global limits applied to every session regardless of tier.
+global:
+  max_transaction_amount: 50000      # INR, hard ceiling any single order cannot exceed
+  currency: "INR"
+  blocked_categories: []             # e.g. ["restricted"] to deny an entire category
+  require_confirmation_above: 20000  # orders above this need explicit human approval
+
+# Trust tiers. New/unknown agents land in "unknown"; upgrade via header/JWT claim later.
+tiers:
+  unknown:
+    description: "First-seen or unauthenticated agent. Tight caps."
+    max_transaction_amount: 2000
+    max_items_per_order: 3
+    allow_auto_execute: true         # can pass policy without human, up to caps
+    risk_tolerance: 0.55             # max risk score allowed to auto-execute
+  trusted:
+    description: "Verified/returning agent with signed token."
+    max_transaction_amount: 15000
+    max_items_per_order: 10
+    allow_auto_execute: true
+    risk_tolerance: 0.80
+  premium:
+    description: "High-trust partner agent."
+    max_transaction_amount: 50000
+    max_items_per_order: 25
+    allow_auto_execute: true
+    risk_tolerance: 0.90
+
+# Risk scoring weights (0..1 contribution, summed then clamped to 1.0).
+risk_weights:
+  high_value: 0.4        # order value near tier ceiling
+  new_agent: 0.25        # unknown tier
+  unusual_quantity: 0.2  # many units of one SKU
+  low_stock: 0.15        # buying near/over available stock

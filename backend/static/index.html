@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auxion — Agentic Commerce Control Room</title>
+<style>
+  :root {
+    --bg:#0b0e14; --panel:#141925; --panel2:#1b2130; --line:#232b3a;
+    --text:#e6ebf2; --muted:#8a97ab; --accent:#5b8cff; --good:#3ddc84;
+    --warn:#ffcc4d; --bad:#ff5b6e; --chip:#26304a;
+  }
+  [data-theme="light"] {
+    --bg:#f4f6fb; --panel:#ffffff; --panel2:#f0f3f9; --line:#e2e8f2;
+    --text:#141925; --muted:#5a6577; --accent:#2f6bff; --good:#12a150;
+    --warn:#b7791f; --bad:#e0384e; --chip:#e8edf7;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:var(--text); font-size:14px; }
+  header { display:flex; align-items:center; gap:16px; padding:12px 20px;
+           border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:10; }
+  header h1 { font-size:18px; margin:0; letter-spacing:.5px; }
+  header .logo { width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#9d5bff); }
+  .grow { flex:1; }
+  .tabs { display:flex; gap:6px; }
+  .tab { padding:7px 14px; border-radius:8px; cursor:pointer; color:var(--muted); border:1px solid transparent; }
+  .tab.active { background:var(--panel2); color:var(--text); border-color:var(--line); }
+  .btn { padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel2);
+         color:var(--text); cursor:pointer; font-size:13px; }
+  .btn:hover { border-color:var(--accent); }
+  .kill { background:var(--bad); border-color:var(--bad); color:#fff; font-weight:700; }
+  .kill.off { background:transparent; color:var(--bad); }
+  .wrap { display:grid; grid-template-columns: 1.1fr 1.4fr 1fr; gap:14px; padding:14px; height:calc(100vh - 59px); }
+  .col { display:flex; flex-direction:column; gap:14px; min-height:0; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; min-height:0; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
+             margin:0; padding:12px 14px; border-bottom:1px solid var(--line); }
+  .card .body { padding:12px 14px; overflow:auto; }
+  .fill { flex:1; min-height:0; }
+
+  /* conversation */
+  .msg { margin:8px 0; display:flex; }
+  .msg .bubble { padding:8px 11px; border-radius:10px; max-width:85%; white-space:pre-wrap; line-height:1.4; }
+  .msg.user { justify-content:flex-end; }
+  .msg.user .bubble { background:var(--accent); color:#fff; }
+  .msg.agent .bubble { background:var(--panel2); border:1px solid var(--line); }
+  .composer { display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--line); }
+  .composer input { flex:1; padding:9px 11px; border-radius:8px; border:1px solid var(--line);
+                    background:var(--panel2); color:var(--text); }
+  select { padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); }
+
+  /* timeline */
+  .step { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px;
+          background:var(--panel2); margin:6px 0; border-left:3px solid var(--line); animation:pop .25s ease; }
+  @keyframes pop { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  .step .name { font-weight:600; }
+  .step .meta { color:var(--muted); font-size:12px; margin-left:auto; }
+  .step.plan { border-left-color:var(--accent); }
+  .step.policy { border-left-color:var(--warn); }
+  .step.allow, .step.settled, .step.order { border-left-color:var(--good); }
+  .step.deny, .step.halted { border-left-color:var(--bad); }
+  .badge { font-size:11px; padding:2px 7px; border-radius:20px; background:var(--chip); }
+  .badge.good{color:var(--good);} .badge.bad{color:var(--bad);} .badge.warn{color:var(--warn);}
+
+  /* gauges + stats */
+  .gauges { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gauge { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  .gauge .k { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+  .gauge .v { font-size:22px; font-weight:700; margin-top:4px; }
+  .bar { height:8px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:8px; }
+  .bar > span { display:block; height:100%; background:linear-gradient(90deg,var(--good),var(--warn),var(--bad)); }
+
+  /* audit */
+  .audit-row { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; padding:6px 8px;
+               border-bottom:1px solid var(--line); }
+  .audit-row .et { color:var(--accent); }
+  .hash { color:var(--muted); }
+  .chip { display:inline-block; padding:1px 6px; border-radius:6px; background:var(--chip); font-size:11px; margin-right:4px; }
+
+  textarea { width:100%; height:100%; min-height:340px; border-radius:8px; border:1px solid var(--line);
+             background:var(--panel2); color:var(--text); font-family:ui-monospace,monospace; font-size:12.5px; padding:10px; }
+  .hidden { display:none; }
+  .products div { padding:6px 0; border-bottom:1px dashed var(--line); }
+  .verify-ok { color:var(--good); } .verify-bad { color:var(--bad); }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"></div>
+  <h1>AUXION</h1>
+  <span style="color:var(--muted)">Agentic Commerce Control Room</span>
+  <div class="grow"></div>
+  <div class="tabs">
+    <div class="tab active" data-tab="control">Control Room</div>
+    <div class="tab" data-tab="policy">Policy</div>
+    <div class="tab" data-tab="audit">Audit</div>
+  </div>
+  <select id="tier" title="Buyer trust tier">
+    <option value="unknown">tier: unknown</option>
+    <option value="trusted">tier: trusted</option>
+    <option value="premium">tier: premium</option>
+  </select>
+  <button class="btn" id="themeBtn">☀︎</button>
+  <button class="btn kill off" id="killBtn">KILL SWITCH</button>
+</header>
+
+<!-- CONTROL ROOM -->
+<div class="wrap" id="tab-control">
+  <div class="col">
+    <div class="card fill">
+      <h2>Live Conversation</h2>
+      <div class="body fill" id="chat"></div>
+      <div class="composer">
+        <input id="chatInput" placeholder='e.g. find a blue t-shirt under 800' autocomplete="off"/>
+        <button class="btn" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card fill">
+      <h2>Decision Timeline · Planner → Critic → Executor</h2>
+      <div class="body fill" id="timeline"></div>
+    </div>
+    <div class="card" id="confirmCard" style="display:none">
+      <h2>Human Approval Required</h2>
+      <div class="body">
+        <div id="confirmText"></div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="btn" style="background:var(--good);color:#04110a;border-color:var(--good)" id="approveBtn">Approve</button>
+          <button class="btn" style="background:var(--bad);color:#fff;border-color:var(--bad)" id="rejectBtn">Reject</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Revenue & Health</h2>
+      <div class="body">
+        <div class="gauges">
+          <div class="gauge"><div class="k">Settled Revenue</div><div class="v" id="stRevenue">₹0</div></div>
+          <div class="gauge"><div class="k">Orders Settled</div><div class="v" id="stOrders">0</div></div>
+          <div class="gauge"><div class="k">Payment Mode</div><div class="v" id="stMode" style="font-size:15px">—</div></div>
+          <div class="gauge"><div class="k">Active Sessions</div><div class="v" id="stSessions">0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Risk / Confidence (last decision)</h2>
+      <div class="body">
+        <div class="gauge">
+          <div class="k">Risk score</div>
+          <div class="v" id="riskVal">—</div>
+          <div class="bar"><span id="riskBar" style="width:0%"></span></div>
+          <div id="riskFactors" style="margin-top:8px;color:var(--muted);font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fill">
+      <h2>Latest Products / Upsell</h2>
+      <div class="body products fill" id="products"><span style="color:var(--muted)">Results show here.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- POLICY -->
+<div class="wrap hidden" id="tab-policy" style="grid-template-columns:1fr;">
+  <div class="col">
+    <div class="card fill">
+      <h2>Policy Editor (hot-swap) — edits take effect on next order</h2>
+      <div class="body fill"><textarea id="policyText" spellcheck="false"></textarea></div>
+      <div class="composer">
+        <button class="btn" id="policySave" style="background:var(--good);color:#04110a;border-color:var(--good)">Save & Reload</button>
+        <span id="policyMsg" style="align-self:center;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIT -->
+<div class="wrap hidden" id="tab-audit" style="grid-template-columns:1fr;">
+  <div class="col">
+    <div class="card fill">
+      <h2>Hash-Chained Audit Log
+        <span id="verifyBadge" class="badge"></span>
+        <a class="btn" href="/api/audit/export?fmt=json" style="float:right;margin-left:6px">Export JSON</a>
+        <a class="btn" href="/api/audit/export?fmt=csv" style="float:right">Export CSV</a>
+      </h2>
+      <div class="body fill" id="auditFeed"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let sessionId = null;
+let killed = false;
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  ['control','policy','audit'].forEach(n =>
+    $('#tab-'+n).classList.toggle('hidden', n !== t.dataset.tab));
+  if (t.dataset.tab==='policy') loadPolicy();
+  if (t.dataset.tab==='audit') loadAudit();
+});
+
+// ---------- theme ----------
+$('#themeBtn').onclick = () => {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+  $('#themeBtn').textContent = h.dataset.theme === 'dark' ? '☀︎' : '☾';
+};
+
+// ---------- chat ----------
+function addMsg(text, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.innerHTML = `<div class="bubble"></div>`;
+  d.querySelector('.bubble').textContent = text;
+  $('#chat').appendChild(d);
+  $('#chat').scrollTop = $('#chat').scrollHeight;
+}
+async function send(){
+  const inp = $('#chatInput'); const text = inp.value.trim();
+  if(!text) return;
+  addMsg(text,'user'); inp.value='';
+  const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text, session_id:sessionId, tier:$('#tier').value})}).then(r=>r.json());
+  sessionId = r.session_id;
+  addMsg(r.reply,'agent');
+  if(r.products) renderProducts(r.products, r.upsell);
+}
+$('#sendBtn').onclick = send;
+$('#chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+
+function renderProducts(products, upsellIds){
+  const el = $('#products'); el.innerHTML='';
+  (products||[]).forEach(p=>{
+    const d=document.createElement('div');
+    d.textContent = `${p.title} — ₹${p.price}`;
+    el.appendChild(d);
+  });
+  if(upsellIds && upsellIds.length){
+    const d=document.createElement('div');
+    d.innerHTML = `<span style="color:var(--muted)">Cross-sell:</span> ${upsellIds.map(i=>`<span class="chip">${i}</span>`).join('')}`;
+    el.appendChild(d);
+  }
+}
+
+// ---------- timeline ----------
+function step(kind, name, meta){
+  const d=document.createElement('div');
+  d.className='step '+kind;
+  d.innerHTML = `<span class="name"></span><span class="meta"></span>`;
+  d.querySelector('.name').textContent = name;
+  d.querySelector('.meta').textContent = meta||'';
+  $('#timeline').appendChild(d);
+  $('#timeline').scrollTop = $('#timeline').scrollHeight;
+}
+
+// ---------- stats/gauges ----------
+function renderStats(s){
+  if(!s) return;
+  $('#stRevenue').textContent = '₹'+Math.round(s.revenue);
+  $('#stOrders').textContent = s.orders_settled;
+  $('#stMode').textContent = s.payment_mode;
+  $('#stSessions').textContent = s.active_sessions;
+  setKill(s.kill_switch);
+}
+function renderRisk(risk, confidence){
+  if(!risk) return;
+  $('#riskVal').textContent = risk.score + (confidence!=null? `  ·  conf ${confidence}`:'');
+  $('#riskBar').style.width = Math.round(risk.score*100)+'%';
+  $('#riskFactors').innerHTML = (risk.factors||[]).map(f=>
+    `<div>• ${f.factor}: ${f.detail} <span style="color:var(--muted)">(+${f.contribution})</span></div>`).join('') || 'no risk factors';
+}
+
+// ---------- kill switch ----------
+function setKill(on){
+  killed = on;
+  const b=$('#killBtn');
+  b.classList.toggle('off', !on);
+  b.textContent = on ? 'KILLED — CLICK TO RESUME' : 'KILL SWITCH';
+}
+$('#killBtn').onclick = async () => {
+  const r = await fetch('/api/kill',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({engaged: !killed})}).then(r=>r.json());
+  setKill(r.kill_switch);
+};
+
+// ---------- confirmation ----------
+function showConfirm(text){
+  $('#confirmCard').style.display='';
+  $('#confirmText').textContent = text;
+}
+function hideConfirm(){ $('#confirmCard').style.display='none'; }
+$('#approveBtn').onclick = ()=>confirm(true);
+$('#rejectBtn').onclick = ()=>confirm(false);
+async function confirm(approve){
+  const r = await fetch('/api/confirm',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({session_id:sessionId, approve})}).then(r=>r.json());
+  addMsg(r.reply,'agent'); hideConfirm();
+}
+
+// ---------- policy ----------
+async function loadPolicy(){
+  $('#policyText').value = await fetch('/api/policy/raw').then(r=>r.text());
+}
+$('#policySave').onclick = async ()=>{
+  const r = await fetch('/api/policy',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({yaml:$('#policyText').value})}).then(r=>r.json());
+  $('#policyMsg').textContent = r.ok ? `saved · version ${r.version}` : ('error: '+r.error);
+};
+
+// ---------- audit ----------
+async function loadAudit(){
+  const r = await fetch('/api/audit?limit=300').then(r=>r.json());
+  const feed = $('#auditFeed'); feed.innerHTML='';
+  r.entries.slice().reverse().forEach(e=>appendAudit(e,false));
+  renderVerify(r.verify);
+}
+function appendAudit(e, prepend=true){
+  const d=document.createElement('div');
+  d.className='audit-row';
+  const t = new Date(e.ts*1000).toLocaleTimeString();
+  d.innerHTML = `<span class="hash">#${e.seq}</span> ${t} <span class="et">${e.event_type}</span> `+
+                `<span class="hash">${(e.hash||'').slice(0,10)}…</span>`;
+  const feed=$('#auditFeed');
+  if(prepend && feed.firstChild) feed.insertBefore(d, feed.firstChild); else feed.appendChild(d);
+}
+function renderVerify(v){
+  const b=$('#verifyBadge');
+  if(!v) return;
+  b.textContent = v.valid ? `chain valid · ${v.count} entries` : `BROKEN at #${v.broken_at}`;
+  b.className = 'badge ' + (v.valid?'good':'bad');
+}
+
+// ---------- websocket live feed ----------
+function connect(){
+  const proto = location.protocol==='https:'?'wss':'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    switch(m.type){
+      case 'snapshot': renderStats(m.stats); renderVerify(m.audit_verify); break;
+      case 'plan':
+        step('plan','① Planner', `${m.proposal.intent} · ${m.proposal._source}`);
+        break;
+      case 'policy_decision': {
+        const d=m.decision;
+        step('policy','② Critic / Policy', `${d.decision} · risk ${d.risk.score}`);
+        renderRisk(d.risk, d.confidence);
+        break; }
+      case 'order_created':
+        step('order','③ Executor · order created', '₹'+Math.round(m.order.amount));
+        break;
+      case 'settled':
+        step('settled','✓ Settled + signed receipt', m.receipt.body.receipt_id);
+        renderStats(m.stats);
+        break;
+      case 'denied':
+        step('deny','✗ Denied', (m.violations||[]).join('; '));
+        break;
+      case 'needs_confirmation':
+        step('policy','⚠ Needs human approval', '₹'+Math.round(m.amount));
+        showConfirm(`Order ₹${Math.round(m.amount)} — ${(m.decision.violations||[]).join('; ')}`);
+        break;
+      case 'kill_switch':
+        step(m.engaged?'halted':'allow', m.engaged?'🛑 Kill switch engaged':'▶ Resumed','');
+        setKill(m.engaged);
+        break;
+      case 'search_results':
+        renderProducts(m.products, (m.upsell||[]).map(u=>u.id));
+        break;
+      case 'policy_update':
+        step('policy','Policy hot-swapped', 'v'+m.version);
+        break;
+    }
+    // any consequential event refreshes audit tab if open
+    if(!$('#tab-audit').classList.contains('hidden')) loadAudit();
+  };
+  ws.onclose = () => setTimeout(connect, 1000);
+}
+connect();
+// initial stats
+fetch('/api/stats').then(r=>r.json()).then(renderStats);
+</script>
+</body>
+</html>
