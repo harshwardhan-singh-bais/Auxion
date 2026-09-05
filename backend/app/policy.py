@@ -1,18 +1,24 @@
-"""Hot-swappable policy engine (#13) with trust tiers (#65) and risk scoring.
+"""Hot-swappable policy engine (#13) — the deterministic Critic.
 
-The Critic step of the pipeline. Pure Python rules over YAML config. Reloads the
-YAML on every evaluation so edits take effect live during a demo. Deterministic:
-the LLM never decides whether money moves — this does.
+Trust tiers (#65), risk scoring, velocity/rate guard, blocked categories, stock
+guard, confirmation thresholds, and a counterfactual simulator (#66) that shows
+what WOULD have happened with a given gate removed — proving gates aren't theater.
+
+The LLM never decides whether money moves. This does.
 """
 from __future__ import annotations
 
+import copy
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 import yaml
 
 from .catalog import catalog
+from .config import CONFIG_DIR
 
-POLICY_PATH = Path(__file__).resolve().parent.parent / "config" / "policy.yaml"
+POLICY_PATH = CONFIG_DIR / "policy.yaml"
 
 
 class PolicyEngine:
@@ -20,6 +26,8 @@ class PolicyEngine:
         self.path = path
         self._cfg: dict = {}
         self._mtime: float = 0.0
+        # session_id -> deque[timestamps] for velocity guard
+        self._velocity: dict[str, deque] = defaultdict(lambda: deque(maxlen=50))
         self.reload(force=True)
 
     def reload(self, force: bool = False) -> None:
@@ -35,10 +43,17 @@ class PolicyEngine:
         return self._cfg
 
     def tier_config(self, tier: str) -> dict:
-        return self.config.get("tiers", {}).get(tier, self.config.get("tiers", {}).get("unknown", {}))
+        tiers = self.config.get("tiers", {})
+        return tiers.get(tier, tiers.get("unknown", {}))
+
+    def record_action(self, session_id: str) -> None:
+        self._velocity[session_id].append(time.time())
+
+    def _velocity_count(self, session_id: str, window: float = 60.0) -> int:
+        now = time.time()
+        return sum(1 for t in self._velocity.get(session_id, []) if now - t <= window)
 
     def score_risk(self, items: list[dict], amount: float, tier: str) -> dict:
-        """Return risk score in 0..1 with a human-readable breakdown."""
         cfg = self.config
         weights = cfg.get("risk_weights", {})
         tier_cfg = self.tier_config(tier)
@@ -75,12 +90,8 @@ class PolicyEngine:
 
         return {"score": round(min(score, 1.0), 3), "factors": factors}
 
-    def evaluate(self, plan: dict, tier: str = "unknown") -> dict:
-        """Decide allow / deny / needs_confirmation for a proposed plan.
-
-        plan = {"items": [{"product_id","qty","price"}...], "amount": float}
-        Returns a structured decision the Executor and UI consume.
-        """
+    def evaluate(self, plan: dict, tier: str = "unknown", session_id: str = "", token_max: float | None = None) -> dict:
+        """Decide allow / deny / needs_confirmation. Pure function of config + plan."""
         cfg = self.config
         g = cfg.get("global", {})
         tier_cfg = self.tier_config(tier)
@@ -88,56 +99,71 @@ class PolicyEngine:
         amount = float(plan.get("amount", 0))
 
         violations: list[str] = []
+        gates: list[dict] = []   # every gate evaluated, for explainability + counterfactual
         decision = "allow"
 
+        def gate(name: str, passed: bool, detail: str, fatal: bool = True):
+            nonlocal decision
+            gates.append({"gate": name, "passed": passed, "detail": detail})
+            if not passed:
+                violations.append(detail)
+                if fatal:
+                    decision = "deny"
+
         # Global hard ceiling
-        if amount > float(g.get("max_transaction_amount", 1e18)):
-            violations.append(f"amount {amount} exceeds global ceiling {g['max_transaction_amount']}")
-            decision = "deny"
+        gate("global_ceiling", amount <= float(g.get("max_transaction_amount", 1e18)),
+             f"amount {amount} exceeds global ceiling {g.get('max_transaction_amount')}")
+
+        # Token scope ceiling (JWT)
+        if token_max is not None:
+            gate("token_scope", amount <= float(token_max),
+                 f"amount {amount} exceeds token-scoped max {token_max}")
 
         # Blocked categories
         blocked = set(g.get("blocked_categories", []))
-        for it in items:
-            prod = catalog.get(it["product_id"])
-            if prod and prod.get("category") in blocked:
-                violations.append(f"category '{prod['category']}' is blocked")
-                decision = "deny"
+        bad_cat = next((catalog.get(it["product_id"]) for it in items
+                        if catalog.get(it["product_id"]) and catalog.get(it["product_id"]).get("category") in blocked), None)
+        gate("blocked_category", bad_cat is None,
+             f"category '{bad_cat['category']}' is blocked" if bad_cat else "no blocked categories")
 
         # Tier ceiling
-        if amount > float(tier_cfg.get("max_transaction_amount", 1e18)):
-            violations.append(
-                f"amount {amount} exceeds tier '{tier}' ceiling {tier_cfg['max_transaction_amount']}"
-            )
-            decision = "deny"
+        gate("tier_ceiling", amount <= float(tier_cfg.get("max_transaction_amount", 1e18)),
+             f"amount {amount} exceeds tier '{tier}' ceiling {tier_cfg.get('max_transaction_amount')}")
 
         # Item count
         total_qty = sum(it.get("qty", 1) for it in items)
-        if total_qty > int(tier_cfg.get("max_items_per_order", 10**9)):
-            violations.append(f"item count {total_qty} exceeds tier limit {tier_cfg['max_items_per_order']}")
-            decision = "deny"
+        gate("item_count", total_qty <= int(tier_cfg.get("max_items_per_order", 10**9)),
+             f"item count {total_qty} exceeds tier limit {tier_cfg.get('max_items_per_order')}")
 
-        # Stock availability (deterministic guard)
+        # Stock guard
+        stock_ok = True
+        stock_detail = "stock available"
         for it in items:
             prod = catalog.get(it["product_id"])
             if not prod:
-                violations.append(f"unknown product {it['product_id']}")
-                decision = "deny"
-            elif it.get("qty", 1) > prod.get("stock", 0):
-                violations.append(f"insufficient stock for {it['product_id']}")
-                decision = "deny"
+                stock_ok = False; stock_detail = f"unknown product {it['product_id']}"; break
+            if it.get("qty", 1) > prod.get("stock", 0):
+                stock_ok = False; stock_detail = f"insufficient stock for {it['product_id']}"; break
+        gate("stock", stock_ok, stock_detail)
+
+        # Velocity / rate guard
+        vmax = int(g.get("velocity_max_orders_per_min", 10**9))
+        vcount = self._velocity_count(session_id) if session_id else 0
+        gate("velocity", vcount < vmax,
+             f"velocity {vcount}/min exceeds limit {vmax}")
 
         risk = self.score_risk(items, amount, tier)
 
-        # Confirmation thresholds (only matter if not already denied)
+        # Non-fatal confirmation gates (only if not already denied)
         if decision != "deny":
             if amount > float(g.get("require_confirmation_above", 1e18)):
                 decision = "needs_confirmation"
-                violations.append(f"amount above global confirmation threshold {g['require_confirmation_above']}")
+                violations.append(f"amount above confirmation threshold {g.get('require_confirmation_above')}")
+                gates.append({"gate": "confirm_threshold", "passed": False, "detail": "needs human approval"})
             elif risk["score"] > float(tier_cfg.get("risk_tolerance", 1.0)):
                 decision = "needs_confirmation"
-                violations.append(
-                    f"risk {risk['score']} exceeds tier tolerance {tier_cfg['risk_tolerance']}"
-                )
+                violations.append(f"risk {risk['score']} exceeds tier tolerance {tier_cfg.get('risk_tolerance')}")
+                gates.append({"gate": "risk_tolerance", "passed": False, "detail": "needs human approval"})
             elif not tier_cfg.get("allow_auto_execute", True):
                 decision = "needs_confirmation"
                 violations.append(f"tier '{tier}' requires human confirmation")
@@ -148,7 +174,29 @@ class PolicyEngine:
             "risk": risk,
             "confidence": round(1.0 - risk["score"], 3),
             "violations": violations,
+            "gates": gates,
             "policy_version": cfg.get("version"),
+            "amount": amount,
+        }
+
+    def counterfactual(self, plan: dict, tier: str, remove_gate: str, session_id: str = "") -> dict:
+        """#66: re-evaluate as if `remove_gate` didn't exist. Shows the gate's real effect."""
+        base = self.evaluate(plan, tier, session_id)
+        # Simulate removal: filter that gate's violation and recompute decision naively.
+        kept_gates = [gt for gt in base["gates"] if gt["gate"] != remove_gate]
+        fatal_failed = any(not gt["passed"] for gt in kept_gates
+                           if gt["gate"] in {"global_ceiling", "token_scope", "blocked_category",
+                                             "tier_ceiling", "item_count", "stock", "velocity"})
+        would = "deny" if fatal_failed else ("needs_confirmation"
+                 if any(gt["gate"] in {"confirm_threshold", "risk_tolerance"} and not gt["passed"] for gt in kept_gates)
+                 else "allow")
+        return {
+            "with_gate": base["decision"],
+            "without_gate": would,
+            "removed_gate": remove_gate,
+            "changed": base["decision"] != would,
+            "explanation": f"With '{remove_gate}' active the order is '{base['decision']}'. "
+                           f"Remove it and the order would be '{would}'.",
         }
 
 

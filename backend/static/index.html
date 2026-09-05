@@ -3,118 +3,146 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Auxion — Agentic Commerce Control Room</title>
+<title>Auxion — Control Room</title>
 <style>
   :root {
     --bg:#0b0e14; --panel:#141925; --panel2:#1b2130; --line:#232b3a;
-    --text:#e6ebf2; --muted:#8a97ab; --accent:#5b8cff; --good:#3ddc84;
+    --text:#e6ebf2; --muted:#8a97ab; --accent:#5b8cff; --accent2:#9d5bff; --good:#3ddc84;
     --warn:#ffcc4d; --bad:#ff5b6e; --chip:#26304a;
   }
   [data-theme="light"] {
     --bg:#f4f6fb; --panel:#ffffff; --panel2:#f0f3f9; --line:#e2e8f2;
-    --text:#141925; --muted:#5a6577; --accent:#2f6bff; --good:#12a150;
+    --text:#141925; --muted:#5a6577; --accent:#2f6bff; --accent2:#7c3aed; --good:#12a150;
     --warn:#b7791f; --bad:#e0384e; --chip:#e8edf7;
   }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
          background:var(--bg); color:var(--text); font-size:14px; }
-  header { display:flex; align-items:center; gap:16px; padding:12px 20px;
-           border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:10; }
-  header h1 { font-size:18px; margin:0; letter-spacing:.5px; }
-  header .logo { width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#9d5bff); }
+  header { display:flex; align-items:center; gap:14px; padding:11px 18px;
+           border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:20; }
+  header h1 { font-size:17px; margin:0; letter-spacing:.5px; }
+  header .logo { width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2)); }
   .grow { flex:1; }
-  .tabs { display:flex; gap:6px; }
-  .tab { padding:7px 14px; border-radius:8px; cursor:pointer; color:var(--muted); border:1px solid transparent; }
+  .tabs { display:flex; gap:5px; }
+  .tab { padding:7px 13px; border-radius:8px; cursor:pointer; color:var(--muted); border:1px solid transparent; font-size:13px; }
   .tab.active { background:var(--panel2); color:var(--text); border-color:var(--line); }
-  .btn { padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel2);
-         color:var(--text); cursor:pointer; font-size:13px; }
+  .btn { padding:7px 11px; border-radius:8px; border:1px solid var(--line); background:var(--panel2);
+         color:var(--text); cursor:pointer; font-size:12.5px; }
   .btn:hover { border-color:var(--accent); }
+  .btn.good{background:var(--good);color:#04110a;border-color:var(--good);font-weight:700;}
+  .btn.bad{background:var(--bad);color:#fff;border-color:var(--bad);}
   .kill { background:var(--bad); border-color:var(--bad); color:#fff; font-weight:700; }
   .kill.off { background:transparent; color:var(--bad); }
-  .wrap { display:grid; grid-template-columns: 1.1fr 1.4fr 1fr; gap:14px; padding:14px; height:calc(100vh - 59px); }
+  select { padding:7px; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); font-size:12.5px; }
+  .wrap { display:none; padding:14px; gap:14px; height:calc(100vh - 55px); }
+  .wrap.active { display:grid; }
+  #tab-control { grid-template-columns: 1.05fr 1.35fr 1fr; }
   .col { display:flex; flex-direction:column; gap:14px; min-height:0; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; min-height:0; }
-  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
-             margin:0; padding:12px 14px; border-bottom:1px solid var(--line); }
-  .card .body { padding:12px 14px; overflow:auto; }
+  .card h2 { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted);
+             margin:0; padding:11px 13px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px;}
+  .card .body { padding:11px 13px; overflow:auto; }
   .fill { flex:1; min-height:0; }
 
-  /* conversation */
-  .msg { margin:8px 0; display:flex; }
-  .msg .bubble { padding:8px 11px; border-radius:10px; max-width:85%; white-space:pre-wrap; line-height:1.4; }
+  .msg { margin:7px 0; display:flex; }
+  .msg .bubble { padding:8px 11px; border-radius:10px; max-width:86%; white-space:pre-wrap; line-height:1.4; }
   .msg.user { justify-content:flex-end; }
   .msg.user .bubble { background:var(--accent); color:#fff; }
   .msg.agent .bubble { background:var(--panel2); border:1px solid var(--line); }
-  .composer { display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--line); }
+  .msg.campaign .bubble { background:color-mix(in srgb,var(--warn) 22%,var(--panel2)); border:1px solid var(--warn); }
+  .composer { display:flex; gap:8px; padding:11px 13px; border-top:1px solid var(--line); }
   .composer input { flex:1; padding:9px 11px; border-radius:8px; border:1px solid var(--line);
                     background:var(--panel2); color:var(--text); }
-  select { padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); }
+  .quick { display:flex; gap:6px; flex-wrap:wrap; padding:0 13px 11px; }
+  .quick span { font-size:11.5px; padding:4px 9px; border:1px solid var(--line); border-radius:14px; cursor:pointer; color:var(--muted); }
+  .quick span:hover { border-color:var(--accent); color:var(--text); }
 
-  /* timeline */
   .step { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px;
           background:var(--panel2); margin:6px 0; border-left:3px solid var(--line); animation:pop .25s ease; }
   @keyframes pop { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
-  .step .name { font-weight:600; }
-  .step .meta { color:var(--muted); font-size:12px; margin-left:auto; }
+  .step .name { font-weight:600; } .step .meta { color:var(--muted); font-size:12px; margin-left:auto; }
   .step.plan { border-left-color:var(--accent); }
   .step.policy { border-left-color:var(--warn); }
-  .step.allow, .step.settled, .step.order { border-left-color:var(--good); }
-  .step.deny, .step.halted { border-left-color:var(--bad); }
+  .step.allow,.step.settled,.step.order { border-left-color:var(--good); }
+  .step.deny,.step.halted,.step.failed { border-left-color:var(--bad); }
   .badge { font-size:11px; padding:2px 7px; border-radius:20px; background:var(--chip); }
   .badge.good{color:var(--good);} .badge.bad{color:var(--bad);} .badge.warn{color:var(--warn);}
 
-  /* gauges + stats */
   .gauges { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .gauge { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  .gauge { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:11px; }
   .gauge .k { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
-  .gauge .v { font-size:22px; font-weight:700; margin-top:4px; }
+  .gauge .v { font-size:21px; font-weight:700; margin-top:3px; }
   .bar { height:8px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:8px; }
-  .bar > span { display:block; height:100%; background:linear-gradient(90deg,var(--good),var(--warn),var(--bad)); }
+  .bar > span { display:block; height:100%; background:linear-gradient(90deg,var(--good),var(--warn),var(--bad)); transition:width .4s; }
 
-  /* audit */
-  .audit-row { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; padding:6px 8px;
-               border-bottom:1px solid var(--line); }
-  .audit-row .et { color:var(--accent); }
-  .hash { color:var(--muted); }
-  .chip { display:inline-block; padding:1px 6px; border-radius:6px; background:var(--chip); font-size:11px; margin-right:4px; }
+  .audit-row { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11.5px; padding:6px 8px; border-bottom:1px solid var(--line); }
+  .audit-row .et { color:var(--accent); } .hash { color:var(--muted); }
+  .chip2 { display:inline-block; padding:1px 6px; border-radius:6px; background:var(--chip); font-size:11px; margin-right:4px; }
 
-  textarea { width:100%; height:100%; min-height:340px; border-radius:8px; border:1px solid var(--line);
+  textarea { width:100%; height:100%; min-height:420px; border-radius:8px; border:1px solid var(--line);
              background:var(--panel2); color:var(--text); font-family:ui-monospace,monospace; font-size:12.5px; padding:10px; }
-  .hidden { display:none; }
   .products div { padding:6px 0; border-bottom:1px dashed var(--line); }
-  .verify-ok { color:var(--good); } .verify-bad { color:var(--bad); }
   a { color:var(--accent); }
+
+  /* trace waterfall */
+  .trace { border:1px solid var(--line); border-radius:8px; margin:8px 0; padding:8px 10px; background:var(--panel2); }
+  .trace .thead { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .spanrow { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12px; }
+  .spanrow .lbl { width:150px; color:var(--muted); }
+  .spantrack { flex:1; height:14px; background:var(--line); border-radius:4px; position:relative; }
+  .spanbar { position:absolute; height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .spanrow .ms { width:70px; text-align:right; color:var(--muted); }
+
+  /* charts */
+  .chartbox { padding:10px 13px; }
+  svg { width:100%; display:block; }
+  .selftest .case { display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .dot { width:10px;height:10px;border-radius:50%; } .dot.p{background:var(--good);} .dot.f{background:var(--bad);}
+  .orderrow{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .st-created{color:var(--muted);} .st-settled{color:var(--good);} .st-failed{color:var(--bad);} .st-refunded{color:var(--warn);}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:9px 13px;border-bottom:1px solid var(--line);}
 </style>
 </head>
 <body>
 <header>
   <div class="logo"></div>
   <h1>AUXION</h1>
-  <span style="color:var(--muted)">Agentic Commerce Control Room</span>
+  <span style="color:var(--muted);font-size:12px" id="merchantName">—</span>
   <div class="grow"></div>
   <div class="tabs">
-    <div class="tab active" data-tab="control">Control Room</div>
+    <div class="tab active" data-tab="control">Control</div>
+    <div class="tab" data-tab="revenue">Revenue</div>
+    <div class="tab" data-tab="traces">Traces</div>
     <div class="tab" data-tab="policy">Policy</div>
     <div class="tab" data-tab="audit">Audit</div>
+    <div class="tab" data-tab="ops">Ops</div>
   </div>
+  <select id="merchant" title="Active merchant"></select>
   <select id="tier" title="Buyer trust tier">
     <option value="unknown">tier: unknown</option>
     <option value="trusted">tier: trusted</option>
     <option value="premium">tier: premium</option>
   </select>
   <button class="btn" id="themeBtn">☀︎</button>
-  <button class="btn kill off" id="killBtn">KILL SWITCH</button>
+  <button class="btn kill off" id="killBtn">KILL</button>
 </header>
 
-<!-- CONTROL ROOM -->
-<div class="wrap" id="tab-control">
+<!-- CONTROL -->
+<div class="wrap active" id="tab-control">
   <div class="col">
     <div class="card fill">
       <h2>Live Conversation</h2>
       <div class="body fill" id="chat"></div>
+      <div class="quick">
+        <span>find a blue t-shirt under 800</span>
+        <span>buy a blue t-shirt</span>
+        <span>recommend add-ons</span>
+        <span>checkout</span>
+        <span>buy 3 slim fit jeans</span>
+      </div>
       <div class="composer">
-        <input id="chatInput" placeholder='e.g. find a blue t-shirt under 800' autocomplete="off"/>
-        <button class="btn" id="sendBtn">Send</button>
+        <input id="chatInput" placeholder='Type to the merchant agent…' autocomplete="off"/>
+        <button class="btn good" id="sendBtn">Send</button>
       </div>
     </div>
   </div>
@@ -129,8 +157,8 @@
       <div class="body">
         <div id="confirmText"></div>
         <div style="margin-top:10px; display:flex; gap:8px;">
-          <button class="btn" style="background:var(--good);color:#04110a;border-color:var(--good)" id="approveBtn">Approve</button>
-          <button class="btn" style="background:var(--bad);color:#fff;border-color:var(--bad)" id="rejectBtn">Reject</button>
+          <button class="btn good" id="approveBtn">Approve</button>
+          <button class="btn bad" id="rejectBtn">Reject</button>
         </div>
       </div>
     </div>
@@ -138,13 +166,18 @@
 
   <div class="col">
     <div class="card">
-      <h2>Revenue & Health</h2>
+      <h2>Revenue &amp; Health</h2>
       <div class="body">
         <div class="gauges">
           <div class="gauge"><div class="k">Settled Revenue</div><div class="v" id="stRevenue">₹0</div></div>
-          <div class="gauge"><div class="k">Orders Settled</div><div class="v" id="stOrders">0</div></div>
-          <div class="gauge"><div class="k">Payment Mode</div><div class="v" id="stMode" style="font-size:15px">—</div></div>
-          <div class="gauge"><div class="k">Active Sessions</div><div class="v" id="stSessions">0</div></div>
+          <div class="gauge"><div class="k">Orders</div><div class="v" id="stOrders">0</div></div>
+          <div class="gauge"><div class="k">Recovered</div><div class="v" id="stRecovered">₹0</div></div>
+          <div class="gauge"><div class="k">Upsell Rev</div><div class="v" id="stUpsell">₹0</div></div>
+        </div>
+        <div style="margin-top:8px;color:var(--muted);font-size:12px">
+          mode <span class="chip2" id="stMode">—</span>
+          sessions <span class="chip2" id="stSessions">0</span>
+          campaigns <span class="chip2" id="stCamp">0</span>
         </div>
       </div>
     </div>
@@ -156,239 +189,408 @@
           <div class="v" id="riskVal">—</div>
           <div class="bar"><span id="riskBar" style="width:0%"></span></div>
           <div id="riskFactors" style="margin-top:8px;color:var(--muted);font-size:12px"></div>
+          <div id="gateList" style="margin-top:8px;font-size:11.5px"></div>
         </div>
       </div>
     </div>
     <div class="card fill">
-      <h2>Latest Products / Upsell</h2>
+      <h2>Products / Cart / Upsell</h2>
       <div class="body products fill" id="products"><span style="color:var(--muted)">Results show here.</span></div>
     </div>
   </div>
 </div>
 
+<!-- REVENUE -->
+<div class="wrap" id="tab-revenue" style="grid-template-columns:1fr 1fr;">
+  <div class="col">
+    <div class="card">
+      <h2>Revenue Breakdown</h2>
+      <div class="chartbox"><svg id="revBars" viewBox="0 0 400 200"></svg></div>
+    </div>
+    <div class="card fill">
+      <h2>Orders</h2>
+      <div class="body fill" id="ordersList"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Cumulative Settled Revenue</h2>
+      <div class="chartbox"><svg id="revLine" viewBox="0 0 400 200"></svg></div>
+    </div>
+    <div class="card">
+      <h2>Campaign Funnel (cart recovery + upsell)</h2>
+      <div class="body">
+        <div class="gauges">
+          <div class="gauge"><div class="k">Campaigns fired</div><div class="v" id="cFired">0</div></div>
+          <div class="gauge"><div class="k">Converted</div><div class="v" id="cConv">0</div></div>
+          <div class="gauge"><div class="k">Recovered ₹</div><div class="v" id="cRec">₹0</div></div>
+          <div class="gauge"><div class="k">Upsell ₹</div><div class="v" id="cUp">₹0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRACES -->
+<div class="wrap" id="tab-traces" style="grid-template-columns:1fr;">
+  <div class="col">
+    <div class="card fill">
+      <h2>Trace Waterfall · per-message span timing <button class="btn" id="refreshTraces" style="margin-left:auto">Refresh</button></h2>
+      <div class="body fill" id="traceList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- POLICY -->
-<div class="wrap hidden" id="tab-policy" style="grid-template-columns:1fr;">
+<div class="wrap" id="tab-policy" style="grid-template-columns:1.3fr 1fr;">
   <div class="col">
     <div class="card fill">
       <h2>Policy Editor (hot-swap) — edits take effect on next order</h2>
       <div class="body fill"><textarea id="policyText" spellcheck="false"></textarea></div>
       <div class="composer">
-        <button class="btn" id="policySave" style="background:var(--good);color:#04110a;border-color:var(--good)">Save & Reload</button>
+        <button class="btn good" id="policySave">Save &amp; Reload</button>
         <span id="policyMsg" style="align-self:center;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Adversarial Self-Test (#15) <button class="btn" id="runSelfTest" style="margin-left:auto">Run</button></h2>
+      <div class="body selftest" id="selfTest"><span style="color:var(--muted)">Run to probe the safety gates.</span></div>
+    </div>
+    <div class="card fill">
+      <h2>Counterfactual · "what if this gate didn't exist?" (#66)</h2>
+      <div class="body">
+        <div class="toolbar" style="border:none;padding:0 0 8px">
+          <select id="cfGate">
+            <option value="tier_ceiling">tier_ceiling</option>
+            <option value="global_ceiling">global_ceiling</option>
+            <option value="item_count">item_count</option>
+            <option value="stock">stock</option>
+            <option value="velocity">velocity</option>
+            <option value="token_scope">token_scope</option>
+          </select>
+          <button class="btn" id="cfRun">Simulate on current cart</button>
+        </div>
+        <div id="cfResult" style="color:var(--muted)">Build a cart in Control, then simulate removing a gate.</div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- AUDIT -->
-<div class="wrap hidden" id="tab-audit" style="grid-template-columns:1fr;">
+<div class="wrap" id="tab-audit" style="grid-template-columns:1fr;">
   <div class="col">
     <div class="card fill">
       <h2>Hash-Chained Audit Log
         <span id="verifyBadge" class="badge"></span>
-        <a class="btn" href="/api/audit/export?fmt=json" style="float:right;margin-left:6px">Export JSON</a>
-        <a class="btn" href="/api/audit/export?fmt=csv" style="float:right">Export CSV</a>
+        <span class="grow"></span>
+        <a class="btn" href="/api/audit/export?fmt=json">Export JSON</a>
+        <a class="btn" href="/api/audit/export?fmt=csv">Export CSV</a>
       </h2>
       <div class="body fill" id="auditFeed"></div>
     </div>
   </div>
 </div>
 
+<!-- OPS -->
+<div class="wrap" id="tab-ops" style="grid-template-columns:1fr 1fr;">
+  <div class="col">
+    <div class="card">
+      <h2>Demo Controls</h2>
+      <div class="body">
+        <div class="toolbar" style="border:none;padding:0">
+          <button class="btn" id="seedBtn">Seed reproducible demo</button>
+          <button class="btn bad" id="armFailBtn">Arm next-payment failure</button>
+          <label style="display:flex;align-items:center;gap:6px;color:var(--muted)">
+            <input type="checkbox" id="demoModeChk"/> safe demo mode
+          </label>
+        </div>
+        <p style="color:var(--muted);font-size:12.5px;margin-top:10px">
+          Arm a failure, then checkout in Control to watch the pipeline mark the order failed,
+          preserve the cart and log a graceful recovery — no money captured.
+        </p>
+      </div>
+    </div>
+    <div class="card fill">
+      <h2>Agent Token Minter (JWT scope)</h2>
+      <div class="body">
+        <div class="toolbar" style="border:none;padding:0">
+          <select id="tokTier"><option>trusted</option><option>premium</option><option>unknown</option></select>
+          <input id="tokMax" value="15000" style="width:90px;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--text)"/>
+          <button class="btn good" id="mintBtn">Mint token</button>
+        </div>
+        <textarea id="tokOut" style="min-height:80px;margin-top:8px" placeholder="token appears here" readonly></textarea>
+        <p style="color:var(--muted);font-size:12px">Feed this to the buyer agent: <code>--token &lt;token&gt;</code></p>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card fill">
+      <h2>Agent Manifest &amp; MCP</h2>
+      <div class="body">
+        <p style="color:var(--muted)">Discoverable endpoints an external AI buyer uses:</p>
+        <p><a href="/.well-known/agent-commerce.json" target="_blank">/.well-known/agent-commerce.json</a></p>
+        <p><a href="/mcp/tools" target="_blank">/mcp/tools</a> — MCP tool definitions</p>
+        <div style="margin-top:12px;padding:12px;background:var(--panel2);border-radius:8px;font-family:ui-monospace,monospace;font-size:12px">
+          # run the independent AI buyer:<br/>
+          python buyer_agent.py "buy white sneakers under 3000" --tier trusted
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const $ = s => document.querySelector(s);
-let sessionId = null;
-let killed = false;
+let sessionId = null, killed = false, lastCart = [];
 
-// ---------- tabs ----------
+// tabs
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
-  ['control','policy','audit'].forEach(n =>
-    $('#tab-'+n).classList.toggle('hidden', n !== t.dataset.tab));
-  if (t.dataset.tab==='policy') loadPolicy();
-  if (t.dataset.tab==='audit') loadAudit();
+  document.querySelectorAll('.wrap').forEach(w=>w.classList.remove('active'));
+  $('#tab-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='policy'){ loadPolicy(); }
+  if(t.dataset.tab==='audit'){ loadAudit(); }
+  if(t.dataset.tab==='revenue'){ loadRevenue(); }
+  if(t.dataset.tab==='traces'){ loadTraces(); }
 });
 
-// ---------- theme ----------
+// theme
 $('#themeBtn').onclick = () => {
-  const h = document.documentElement;
-  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-  $('#themeBtn').textContent = h.dataset.theme === 'dark' ? '☀︎' : '☾';
+  const h=document.documentElement;
+  h.dataset.theme = h.dataset.theme==='dark'?'light':'dark';
+  $('#themeBtn').textContent = h.dataset.theme==='dark'?'☀︎':'☾';
 };
 
-// ---------- chat ----------
+// chat
 function addMsg(text, who){
-  const d = document.createElement('div');
-  d.className = 'msg ' + who;
-  d.innerHTML = `<div class="bubble"></div>`;
-  d.querySelector('.bubble').textContent = text;
-  $('#chat').appendChild(d);
-  $('#chat').scrollTop = $('#chat').scrollHeight;
+  const d=document.createElement('div'); d.className='msg '+who;
+  d.innerHTML=`<div class="bubble"></div>`; d.querySelector('.bubble').textContent=text;
+  $('#chat').appendChild(d); $('#chat').scrollTop=$('#chat').scrollHeight;
 }
-async function send(){
-  const inp = $('#chatInput'); const text = inp.value.trim();
-  if(!text) return;
-  addMsg(text,'user'); inp.value='';
+async function send(text){
+  text = (text!=null?text:$('#chatInput').value).trim(); if(!text) return;
+  addMsg(text,'user'); $('#chatInput').value='';
   const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({text, session_id:sessionId, tier:$('#tier').value})}).then(r=>r.json());
-  sessionId = r.session_id;
-  addMsg(r.reply,'agent');
-  if(r.products) renderProducts(r.products, r.upsell);
+  sessionId=r.session_id; addMsg(r.reply,'agent');
+  if(r.cart) lastCart=r.cart;
+  if(r.products) renderProducts(r.products, r.upsell, r.cart, r.bundle);
+  else if(r.cart) renderProducts([], r.upsell, r.cart, r.bundle);
 }
-$('#sendBtn').onclick = send;
-$('#chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+$('#sendBtn').onclick=()=>send();
+$('#chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+document.querySelectorAll('.quick span').forEach(s=>s.onclick=()=>send(s.textContent));
 
-function renderProducts(products, upsellIds){
-  const el = $('#products'); el.innerHTML='';
-  (products||[]).forEach(p=>{
-    const d=document.createElement('div');
-    d.textContent = `${p.title} — ₹${p.price}`;
-    el.appendChild(d);
-  });
+function renderProducts(products, upsellIds, cart, bundle){
+  const el=$('#products'); el.innerHTML='';
+  if(cart && cart.length){
+    const h=document.createElement('div'); h.innerHTML=`<b>Cart</b>`; el.appendChild(h);
+    cart.forEach(c=>{ const d=document.createElement('div'); d.textContent=`${c.qty}× ${c.product_id} — ₹${c.price*c.qty}`; el.appendChild(d);});
+  }
+  (products||[]).forEach(p=>{ const d=document.createElement('div'); d.textContent=`${p.title} — ₹${p.price}`; el.appendChild(d);});
   if(upsellIds && upsellIds.length){
     const d=document.createElement('div');
-    d.innerHTML = `<span style="color:var(--muted)">Cross-sell:</span> ${upsellIds.map(i=>`<span class="chip">${i}</span>`).join('')}`;
+    d.innerHTML=`<span style="color:var(--muted)">Cross-sell:</span> ${upsellIds.map(i=>`<span class="chip2">${i}</span>`).join('')}`;
+    el.appendChild(d);
+  }
+  if(bundle){
+    const d=document.createElement('div');
+    d.innerHTML=`<span style="color:var(--warn)">Bundle:</span> ${bundle.title} → ₹${bundle.bundle_price} (save ₹${bundle.save})`;
     el.appendChild(d);
   }
 }
 
-// ---------- timeline ----------
-function step(kind, name, meta){
-  const d=document.createElement('div');
-  d.className='step '+kind;
-  d.innerHTML = `<span class="name"></span><span class="meta"></span>`;
-  d.querySelector('.name').textContent = name;
-  d.querySelector('.meta').textContent = meta||'';
-  $('#timeline').appendChild(d);
-  $('#timeline').scrollTop = $('#timeline').scrollHeight;
+// timeline
+function step(kind,name,meta){
+  const d=document.createElement('div'); d.className='step '+kind;
+  d.innerHTML=`<span class="name"></span><span class="meta"></span>`;
+  d.querySelector('.name').textContent=name; d.querySelector('.meta').textContent=meta||'';
+  $('#timeline').appendChild(d); $('#timeline').scrollTop=$('#timeline').scrollHeight;
 }
 
-// ---------- stats/gauges ----------
+// stats
 function renderStats(s){
   if(!s) return;
-  $('#stRevenue').textContent = '₹'+Math.round(s.revenue);
-  $('#stOrders').textContent = s.orders_settled;
-  $('#stMode').textContent = s.payment_mode;
-  $('#stSessions').textContent = s.active_sessions;
+  $('#stRevenue').textContent='₹'+Math.round(s.revenue);
+  $('#stOrders').textContent=s.orders_settled;
+  $('#stRecovered').textContent='₹'+Math.round(s.recovered||0);
+  $('#stUpsell').textContent='₹'+Math.round(s.upsell_revenue||0);
+  $('#stMode').textContent=s.payment_mode;
+  $('#stSessions').textContent=s.active_sessions;
+  $('#stCamp').textContent=(s.campaigns&&s.campaigns.fired)||0;
+  if(s.merchant) $('#merchantName').textContent=s.merchant.name;
   setKill(s.kill_switch);
+  if(s.demo_mode!=null) $('#demoModeChk').checked=s.demo_mode;
 }
-function renderRisk(risk, confidence){
+function renderRisk(risk,confidence,gates){
   if(!risk) return;
-  $('#riskVal').textContent = risk.score + (confidence!=null? `  ·  conf ${confidence}`:'');
-  $('#riskBar').style.width = Math.round(risk.score*100)+'%';
-  $('#riskFactors').innerHTML = (risk.factors||[]).map(f=>
-    `<div>• ${f.factor}: ${f.detail} <span style="color:var(--muted)">(+${f.contribution})</span></div>`).join('') || 'no risk factors';
+  $('#riskVal').textContent=risk.score+(confidence!=null?`  ·  conf ${confidence}`:'');
+  $('#riskBar').style.width=Math.round(risk.score*100)+'%';
+  $('#riskFactors').innerHTML=(risk.factors||[]).map(f=>`<div>• ${f.factor}: ${f.detail} <span style="color:var(--muted)">(+${f.contribution})</span></div>`).join('')||'no risk factors';
+  if(gates){ $('#gateList').innerHTML=gates.map(g=>`<span class="chip2" style="color:${g.passed?'var(--good)':'var(--bad)'}">${g.passed?'✓':'✗'} ${g.gate}</span>`).join(''); }
 }
 
-// ---------- kill switch ----------
-function setKill(on){
-  killed = on;
-  const b=$('#killBtn');
-  b.classList.toggle('off', !on);
-  b.textContent = on ? 'KILLED — CLICK TO RESUME' : 'KILL SWITCH';
-}
-$('#killBtn').onclick = async () => {
-  const r = await fetch('/api/kill',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({engaged: !killed})}).then(r=>r.json());
-  setKill(r.kill_switch);
-};
+// kill
+function setKill(on){ killed=on; const b=$('#killBtn'); b.classList.toggle('off',!on); b.textContent=on?'KILLED — RESUME':'KILL'; }
+$('#killBtn').onclick=async()=>{ const r=await fetch('/api/kill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({engaged:!killed})}).then(r=>r.json()); setKill(r.kill_switch); };
 
-// ---------- confirmation ----------
-function showConfirm(text){
-  $('#confirmCard').style.display='';
-  $('#confirmText').textContent = text;
-}
+// confirm
+function showConfirm(t){ $('#confirmCard').style.display=''; $('#confirmText').textContent=t; }
 function hideConfirm(){ $('#confirmCard').style.display='none'; }
-$('#approveBtn').onclick = ()=>confirm(true);
-$('#rejectBtn').onclick = ()=>confirm(false);
-async function confirm(approve){
-  const r = await fetch('/api/confirm',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({session_id:sessionId, approve})}).then(r=>r.json());
+$('#approveBtn').onclick=()=>doConfirm(true); $('#rejectBtn').onclick=()=>doConfirm(false);
+async function doConfirm(approve){
+  const r=await fetch('/api/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,approve})}).then(r=>r.json());
   addMsg(r.reply,'agent'); hideConfirm();
 }
 
-// ---------- policy ----------
-async function loadPolicy(){
-  $('#policyText').value = await fetch('/api/policy/raw').then(r=>r.text());
+// policy
+async function loadPolicy(){ $('#policyText').value=await fetch('/api/policy/raw').then(r=>r.text()); }
+$('#policySave').onclick=async()=>{
+  const r=await fetch('/api/policy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({yaml:$('#policyText').value})}).then(r=>r.json());
+  $('#policyMsg').textContent=r.ok?`saved · version ${r.version}`:('error: '+r.error);
+};
+$('#runSelfTest').onclick=async()=>{
+  const r=await fetch('/api/self-test',{method:'POST'}).then(r=>r.json());
+  renderSelfTest(r);
+};
+function renderSelfTest(r){
+  const el=$('#selfTest');
+  el.innerHTML=`<div style="margin-bottom:8px"><b>${r.passed}/${r.total}</b> gates held ${r.all_passed?'<span class="badge good">ALL PASS</span>':'<span class="badge bad">CHECK</span>'}</div>`;
+  r.cases.forEach(c=>{ const d=document.createElement('div'); d.className='case';
+    d.innerHTML=`<span class="dot ${c.pass?'p':'f'}"></span><span>${c.name}</span><span style="margin-left:auto;color:var(--muted)">${c.got}</span>`; el.appendChild(d);});
 }
-$('#policySave').onclick = async ()=>{
-  const r = await fetch('/api/policy',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({yaml:$('#policyText').value})}).then(r=>r.json());
-  $('#policyMsg').textContent = r.ok ? `saved · version ${r.version}` : ('error: '+r.error);
+$('#cfRun').onclick=async()=>{
+  if(!lastCart.length){ $('#cfResult').textContent='Build a cart in Control first.'; return; }
+  const r=await fetch('/api/policy/counterfactual',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({session_id:sessionId,items:lastCart,tier:$('#tier').value,remove_gate:$('#cfGate').value})}).then(r=>r.json());
+  $('#cfResult').innerHTML=`<div>${r.explanation}</div><div style="margin-top:6px">with gate: <b>${r.with_gate}</b> · without: <b style="color:${r.changed?'var(--bad)':'var(--muted)'}">${r.without_gate}</b> ${r.changed?'<span class="badge bad">gate matters</span>':'<span class="badge">no change</span>'}</div>`;
 };
 
-// ---------- audit ----------
+// audit
 async function loadAudit(){
-  const r = await fetch('/api/audit?limit=300').then(r=>r.json());
-  const feed = $('#auditFeed'); feed.innerHTML='';
+  const r=await fetch('/api/audit?limit=400').then(r=>r.json());
+  const feed=$('#auditFeed'); feed.innerHTML='';
   r.entries.slice().reverse().forEach(e=>appendAudit(e,false));
   renderVerify(r.verify);
 }
-function appendAudit(e, prepend=true){
-  const d=document.createElement('div');
-  d.className='audit-row';
-  const t = new Date(e.ts*1000).toLocaleTimeString();
-  d.innerHTML = `<span class="hash">#${e.seq}</span> ${t} <span class="et">${e.event_type}</span> `+
-                `<span class="hash">${(e.hash||'').slice(0,10)}…</span>`;
-  const feed=$('#auditFeed');
-  if(prepend && feed.firstChild) feed.insertBefore(d, feed.firstChild); else feed.appendChild(d);
+function appendAudit(e,prepend=true){
+  const d=document.createElement('div'); d.className='audit-row';
+  const t=new Date(e.ts*1000).toLocaleTimeString();
+  d.innerHTML=`<span class="hash">#${e.seq}</span> ${t} <span class="et">${e.event_type}</span> <span class="hash">${(e.hash||'').slice(0,12)}…</span>`;
+  const feed=$('#auditFeed'); if(prepend&&feed.firstChild)feed.insertBefore(d,feed.firstChild); else feed.appendChild(d);
 }
-function renderVerify(v){
-  const b=$('#verifyBadge');
-  if(!v) return;
-  b.textContent = v.valid ? `chain valid · ${v.count} entries` : `BROKEN at #${v.broken_at}`;
-  b.className = 'badge ' + (v.valid?'good':'bad');
+function renderVerify(v){ const b=$('#verifyBadge'); if(!v)return; b.textContent=v.valid?`chain valid · ${v.count}`:`BROKEN at #${v.broken_at}`; b.className='badge '+(v.valid?'good':'bad'); }
+
+// revenue tab
+async function loadRevenue(){
+  const s=await fetch('/api/stats').then(r=>r.json());
+  const o=await fetch('/api/orders?limit=100').then(r=>r.json());
+  drawRevBars(s); drawRevLine(o.orders||[]); renderOrders(o.orders||[]);
+  $('#cFired').textContent=(s.campaigns&&s.campaigns.fired)||0;
+  $('#cConv').textContent=(s.campaigns&&s.campaigns.converted)||0;
+  $('#cRec').textContent='₹'+Math.round(s.recovered||0);
+  $('#cUp').textContent='₹'+Math.round(s.upsell_revenue||0);
+}
+function drawRevBars(s){
+  const data=[['Total',s.revenue],['Recovered',s.recovered||0],['Upsell',s.upsell_revenue||0]];
+  const max=Math.max(1,...data.map(d=>d[1])); const W=400,H=200,bw=80,gap=50;
+  let svg=''; data.forEach((d,i)=>{ const h=(d[1]/max)*140; const x=40+i*(bw+gap); const y=170-h;
+    svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="6" fill="url(#g)"/>`;
+    svg+=`<text x="${x+bw/2}" y="188" fill="#8a97ab" font-size="11" text-anchor="middle">${d[0]}</text>`;
+    svg+=`<text x="${x+bw/2}" y="${y-6}" fill="#e6ebf2" font-size="12" text-anchor="middle">₹${Math.round(d[1])}</text>`;});
+  $('#revBars').innerHTML=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b8cff"/><stop offset="1" stop-color="#9d5bff"/></linearGradient></defs>${svg}`;
+}
+function drawRevLine(orders){
+  const settled=orders.filter(o=>o.status==='settled').sort((a,b)=>a.created_at-b.created_at);
+  let cum=0; const pts=settled.map(o=>{cum+=o.amount; return cum;});
+  const W=400,H=200,max=Math.max(1,cum); if(!pts.length){$('#revLine').innerHTML='<text x="200" y="100" fill="#8a97ab" text-anchor="middle">no settled orders yet</text>';return;}
+  const step=pts.length>1?(360/(pts.length-1)):0;
+  let path=''; pts.forEach((p,i)=>{ const x=20+i*step; const y=180-(p/max)*150; path+=(i?'L':'M')+x+' '+y+' ';});
+  let dots=pts.map((p,i)=>{const x=20+i*step;const y=180-(p/max)*150;return `<circle cx="${x}" cy="${y}" r="3" fill="#5b8cff"/>`;}).join('');
+  $('#revLine').innerHTML=`<path d="${path}" fill="none" stroke="#5b8cff" stroke-width="2.5"/>${dots}<text x="20" y="18" fill="#8a97ab" font-size="11">₹${Math.round(cum)} cumulative</text>`;
+}
+function renderOrders(orders){
+  const el=$('#ordersList'); el.innerHTML='';
+  orders.forEach(o=>{ const d=document.createElement('div'); d.className='orderrow';
+    d.innerHTML=`<span class="st-${o.status}">●</span><span>${o.order_id}</span><span style="color:var(--muted)">${o.items.length} item(s)</span><span style="margin-left:auto">₹${Math.round(o.amount)}</span><span class="st-${o.status}">${o.status}</span>`;
+    if(o.status==='settled'){ const b=document.createElement('button'); b.className='btn'; b.textContent='Refund'; b.style.marginLeft='8px';
+      b.onclick=async()=>{ await fetch(`/api/orders/${o.order_id}/refund`,{method:'POST'}); loadRevenue(); }; d.appendChild(b);}
+    el.appendChild(d);});
 }
 
-// ---------- websocket live feed ----------
+// traces
+async function loadTraces(){
+  const r=await fetch('/api/traces?limit=15').then(r=>r.json());
+  const el=$('#traceList'); el.innerHTML='';
+  (r.traces||[]).forEach(t=>el.appendChild(traceEl(t)));
+  if(!(r.traces||[]).length) el.innerHTML='<span style="color:var(--muted)">Send a message in Control to generate traces.</span>';
+}
+$('#refreshTraces').onclick=loadTraces;
+function traceEl(t){
+  const d=document.createElement('div'); d.className='trace';
+  const total=t.duration_ms||1;
+  let rows=`<div class="thead"><span>${t.name} · ${t.trace_id}</span><span>${t.duration_ms} ms</span></div>`;
+  (t.spans||[]).forEach(s=>{ const off=((s.start-t.start)*1000/total)*100; const w=Math.max(1,(s.duration_ms/total)*100);
+    rows+=`<div class="spanrow"><span class="lbl">${s.name}</span><span class="spantrack"><span class="spanbar" style="left:${off}%;width:${w}%"></span></span><span class="ms">${s.duration_ms} ms</span></div>`;});
+  d.innerHTML=rows; return d;
+}
+
+// merchant switch
+async function loadMerchants(){
+  const r=await fetch('/api/merchants').then(r=>r.json());
+  const sel=$('#merchant'); sel.innerHTML='';
+  r.merchants.forEach(m=>{ const o=document.createElement('option'); o.value=m.id; o.textContent=m.name; if(m.id===r.active)o.selected=true; sel.appendChild(o);});
+  sel.onchange=async()=>{ await fetch('/api/merchant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({merchant_id:sel.value})}); sessionId=null; $('#chat').innerHTML=''; refreshStats(); };
+}
+
+// ops
+$('#seedBtn').onclick=async()=>{ await fetch('/api/seed',{method:'POST'}); refreshStats(); loadRevenue(); };
+$('#armFailBtn').onclick=async()=>{ await fetch('/api/arm-failure',{method:'POST'}); step('failed','⚠ Failure armed','next payment will fail'); };
+$('#demoModeChk').onchange=async(e)=>{ await fetch('/api/demo-mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:e.target.checked})}); };
+$('#mintBtn').onclick=async()=>{
+  const r=await fetch('/api/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tier:$('#tokTier').value,max_amount:parseFloat($('#tokMax').value)})}).then(r=>r.json());
+  $('#tokOut').value=r.token;
+};
+
+function refreshStats(){ fetch('/api/stats').then(r=>r.json()).then(renderStats); }
+
+// websocket
 function connect(){
-  const proto = location.protocol==='https:'?'wss':'ws';
-  const ws = new WebSocket(`${proto}://${location.host}/ws`);
-  ws.onmessage = ev => {
-    const m = JSON.parse(ev.data);
+  const proto=location.protocol==='https:'?'wss':'ws';
+  const ws=new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onmessage=ev=>{
+    const m=JSON.parse(ev.data);
     switch(m.type){
       case 'snapshot': renderStats(m.stats); renderVerify(m.audit_verify); break;
-      case 'plan':
-        step('plan','① Planner', `${m.proposal.intent} · ${m.proposal._source}`);
-        break;
-      case 'policy_decision': {
-        const d=m.decision;
-        step('policy','② Critic / Policy', `${d.decision} · risk ${d.risk.score}`);
-        renderRisk(d.risk, d.confidence);
-        break; }
-      case 'order_created':
-        step('order','③ Executor · order created', '₹'+Math.round(m.order.amount));
-        break;
-      case 'settled':
-        step('settled','✓ Settled + signed receipt', m.receipt.body.receipt_id);
-        renderStats(m.stats);
-        break;
-      case 'denied':
-        step('deny','✗ Denied', (m.violations||[]).join('; '));
-        break;
-      case 'needs_confirmation':
-        step('policy','⚠ Needs human approval', '₹'+Math.round(m.amount));
-        showConfirm(`Order ₹${Math.round(m.amount)} — ${(m.decision.violations||[]).join('; ')}`);
-        break;
-      case 'kill_switch':
-        step(m.engaged?'halted':'allow', m.engaged?'🛑 Kill switch engaged':'▶ Resumed','');
-        setKill(m.engaged);
-        break;
-      case 'search_results':
-        renderProducts(m.products, (m.upsell||[]).map(u=>u.id));
-        break;
-      case 'policy_update':
-        step('policy','Policy hot-swapped', 'v'+m.version);
-        break;
+      case 'plan': step('plan','① Planner',`${m.proposal.intent} · ${m.proposal._source}`); break;
+      case 'policy_decision': { const d=m.decision; step('policy','② Critic / Policy',`${d.decision} · risk ${d.risk.score}`); renderRisk(d.risk,d.confidence,d.gates); break; }
+      case 'order_created': step('order','③ Executor · order created','₹'+Math.round(m.order.amount)); break;
+      case 'settled': step('settled','✓ Settled + signed receipt',m.receipt.body.receipt_id); renderStats(m.stats); break;
+      case 'payment_failed': step('failed','✗ Payment failed',m.reason); addMsg(`⚠️ Payment failed: ${m.reason}. ${m.recovery}`,'agent'); break;
+      case 'refund': step('policy','↩ Refund issued',m.order.order_id); renderStats(m.stats); break;
+      case 'denied': step('deny','✗ Denied',(m.violations||[]).join('; ')); break;
+      case 'needs_confirmation': step('policy','⚠ Needs human approval','₹'+Math.round(m.amount)); showConfirm(`Order ₹${Math.round(m.amount)} — ${(m.decision.violations||[]).join('; ')}`); break;
+      case 'kill_switch': step(m.engaged?'halted':'allow',m.engaged?'🛑 Kill switch engaged':'▶ Resumed',''); setKill(m.engaged); break;
+      case 'search_results': renderProducts(m.products,(m.upsell||[]).map(u=>u.id)); break;
+      case 'cart_update': lastCart=m.cart||[]; renderProducts([], (m.upsell||[]).map(u=>u.id), m.cart, m.bundle); break;
+      case 'campaign_fired': addMsg(m.message,'campaign'); step('policy','📣 Campaign fired',m.kind); break;
+      case 'policy_update': step('policy','Policy hot-swapped','v'+m.version); break;
+      case 'self_test': renderSelfTest(m); break;
+      case 'merchant_switch': refreshStats(); loadMerchants(); break;
+      case 'seeded': renderStats(m.stats); break;
+      case 'failure_armed': break;
     }
-    // any consequential event refreshes audit tab if open
-    if(!$('#tab-audit').classList.contains('hidden')) loadAudit();
+    if($('#tab-audit').classList.contains('active')) loadAudit();
+    if($('#tab-revenue').classList.contains('active')) loadRevenue();
   };
-  ws.onclose = () => setTimeout(connect, 1000);
+  ws.onclose=()=>setTimeout(connect,1000);
 }
 connect();
-// initial stats
-fetch('/api/stats').then(r=>r.json()).then(renderStats);
+loadMerchants();
+refreshStats();
 </script>
 </body>
 </html>

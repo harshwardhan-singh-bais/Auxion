@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Auxion — Agentic Commerce for the Agent Economy</title>
+<style>
+  :root{--bg:#0a0d13;--panel:#121622;--line:#222b3c;--text:#e8edf5;--muted:#8b98ad;
+        --accent:#5b8cff;--accent2:#9d5bff;--good:#3ddc84;}
+  [data-theme="light"]{--bg:#f6f8fc;--panel:#fff;--line:#e3e9f3;--text:#141925;--muted:#5a6577;
+        --accent:#2f6bff;--accent2:#7c3aed;--good:#12a150;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);
+       color:var(--text);line-height:1.6;overflow-x:hidden}
+  .nav{display:flex;align-items:center;gap:14px;padding:18px 40px;border-bottom:1px solid var(--line);
+       position:sticky;top:0;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);z-index:10}
+  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .nav h1{font-size:20px;letter-spacing:1px}
+  .nav .grow{flex:1}
+  .btn{padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+       color:var(--text);cursor:pointer;text-decoration:none;font-size:14px;font-weight:600;display:inline-block}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff}
+  .hero{padding:90px 40px 60px;text-align:center;max-width:900px;margin:0 auto}
+  .hero .tag{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:20px;
+             color:var(--muted);font-size:13px;margin-bottom:24px}
+  .hero h2{font-size:52px;line-height:1.1;letter-spacing:-1px;margin-bottom:20px}
+  .hero h2 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;
+               background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 32px}
+  .cta{display:flex;gap:14px;justify-content:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
+        max-width:1100px;margin:40px auto;padding:0 40px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px}
+  .card .ico{width:44px;height:44px;border-radius:11px;background:color-mix(in srgb,var(--accent) 18%,transparent);
+             display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+  .card h3{font-size:17px;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14px}
+  .flow{max-width:1000px;margin:70px auto;padding:0 40px;text-align:center}
+  .flow h3{font-size:30px;margin-bottom:10px}
+  .flow .sub{color:var(--muted);margin-bottom:36px}
+  .pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center}
+  .stage{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);padding:22px;position:relative}
+  .stage:first-child{border-radius:14px 0 0 14px}
+  .stage:last-child{border-radius:0 14px 14px 0}
+  .stage .n{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:1px}
+  .stage h4{font-size:18px;margin:8px 0}
+  .stage p{color:var(--muted);font-size:13px}
+  .arrow{display:flex;align-items:center;color:var(--accent);font-size:24px;padding:0 4px}
+  .stats-strip{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin:50px auto;padding:0 40px}
+  .stat{text-align:center}
+  .stat .v{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));
+           -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .stat .k{color:var(--muted);font-size:13px}
+  footer{text-align:center;padding:50px 40px;color:var(--muted);border-top:1px solid var(--line);margin-top:60px}
+  .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+  .chip{padding:5px 12px;border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="logo"></div><h1>AUXION</h1>
+    <div class="grow"></div>
+    <span class="chip">Track 01 · AI Growth &amp; Agentic Commerce</span>
+    <a class="btn primary" href="/app">Open Control Room →</a>
+  </nav>
+
+  <section class="hero">
+    <div class="tag">⚡ Built on Razorpay test-mode · ACP / AP2 / x402-ready</div>
+    <h2>The merchant agent that <span>grows revenue</span> and sells to <span>AI buyers</span>.</h2>
+    <p>Auxion is a conversational commerce agent with a deterministic safety spine. Every money action is
+       explainable, bounded, gated, and hash-chain audited. Humans and autonomous AI agents check out
+       through the exact same guarded pipeline.</p>
+    <div class="cta">
+      <a class="btn primary" href="/app">Launch Dashboard</a>
+      <a class="btn" href="/.well-known/agent-commerce.json" target="_blank">View Agent Manifest</a>
+    </div>
+    <div class="badges">
+      <span class="chip">Planner → Critic → Executor</span>
+      <span class="chip">Hash-chained audit</span>
+      <span class="chip">Signed receipts</span>
+      <span class="chip">Trust tiers + JWT scope</span>
+      <span class="chip">MCP tool server</span>
+      <span class="chip">Cart recovery + upsell</span>
+    </div>
+  </section>
+
+  <div class="stats-strip">
+    <div class="stat"><div class="v" id="s-rev">₹—</div><div class="k">Settled revenue</div></div>
+    <div class="stat"><div class="v" id="s-orders">—</div><div class="k">Orders settled</div></div>
+    <div class="stat"><div class="v" id="s-rec">₹—</div><div class="k">Cart recovered</div></div>
+    <div class="stat"><div class="v" id="s-mode">—</div><div class="k">Payment mode</div></div>
+  </div>
+
+  <section class="grid">
+    <div class="card"><div class="ico">🧠</div><h3>LLM proposes, code decides</h3>
+      <p>The model only extracts intent and proposes structured actions. Deterministic Python moves money — never the model.</p></div>
+    <div class="card"><div class="ico">🛡️</div><h3>Bounded &amp; gated</h3>
+      <p>Trust tiers, amount ceilings, velocity guards, stock checks and risk scoring gate every order. Edit policy live in YAML.</p></div>
+    <div class="card"><div class="ico">🔗</div><h3>Hash-chained audit</h3>
+      <p>Append-only log where each entry chains to the previous hash. Tamper anywhere and verification breaks. Export CSV/JSON.</p></div>
+    <div class="card"><div class="ico">🤖</div><h3>Agent-to-agent</h3>
+      <p>Discoverable <code>/.well-known/agent-commerce.json</code> + MCP tools let any compatible AI buyer shop autonomously.</p></div>
+    <div class="card"><div class="ico">📈</div><h3>Revenue growth</h3>
+      <p>Cart-recovery campaigns, cross-sell and bundle offers grow merchant revenue — attributed and tracked live.</p></div>
+    <div class="card"><div class="ico">🧯</div><h3>Graceful failure</h3>
+      <p>Inject a payment failure and watch the pipeline mark it failed, preserve the cart, and refund cleanly. No money lost.</p></div>
+  </section>
+
+  <section class="flow">
+    <h3>Every money action, one guarded pipeline</h3>
+    <div class="sub">The same path for a human typing in chat and an autonomous AI buyer.</div>
+    <div class="pipe">
+      <div class="stage"><div class="n">① PLANNER</div><h4>Intent</h4><p>LLM / rules turn language into a structured proposal.</p></div>
+      <div class="arrow">→</div>
+      <div class="stage"><div class="n">② CRITIC</div><h4>Policy + Risk</h4><p>Deterministic gates: tiers, ceilings, stock, velocity, risk score.</p></div>
+      <div class="arrow">→</div>
+      <div class="stage"><div class="n">③ EXECUTOR</div><h4>Settlement</h4><p>Razorpay order → link → webhook → signed receipt.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Auxion · Agentic Commerce Control Room — <a href="/app" style="color:var(--accent)">open the dashboard</a> ·
+    manifest at <a href="/.well-known/agent-commerce.json" style="color:var(--accent)">/.well-known/agent-commerce.json</a>
+  </footer>
+
+<script>
+  fetch('/api/stats').then(r=>r.json()).then(s=>{
+    document.getElementById('s-rev').textContent = '₹'+Math.round(s.revenue||0);
+    document.getElementById('s-orders').textContent = s.orders_settled||0;
+    document.getElementById('s-rec').textContent = '₹'+Math.round(s.recovered||0);
+    document.getElementById('s-mode').textContent = s.payment_mode||'—';
+  }).catch(()=>{});
+</script>
+</body>
+</html>
