@@ -156,3 +156,8 @@ def reset_all() -> None:
     """For seeded/reproducible demo runs."""
     with _lock, _conn() as c:
         c.executescript("DELETE FROM orders; DELETE FROM campaigns; DELETE FROM sessions; DELETE FROM metrics;")
+
+
+# Initialize the schema at import time so any import order is safe (the
+# orchestrator singleton reads metrics before main.py would otherwise init).
+init_db()

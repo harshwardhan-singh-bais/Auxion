@@ -26,12 +26,20 @@ def _extract_max_price(text: str) -> Optional[float]:
 
 
 def _extract_qty(text: str) -> int:
-    m = QTY_RE.search(text)
+    # Remove any price phrase ("under 800", "max 1500") so its number is never
+    # mistaken for a quantity.
+    cleaned = PRICE_RE.sub(" ", text)
+    # explicit unit form: "3x", "2 units"
+    m = QTY_RE.search(cleaned)
     if m:
         return max(1, int(m.group(1)))
-    words = {"a": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+    # bare leading quantity: "buy 3 slim fit jeans", "3 t-shirts"
+    m = re.search(r"\b(\d+)\s+[a-z]", cleaned)
+    if m:
+        return max(1, int(m.group(1)))
+    words = {"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
     for w, n in words.items():
-        if re.search(rf"\b{w}\b", text):
+        if re.search(rf"\b{w}\b", cleaned):
             return n
     return 1
 

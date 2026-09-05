@@ -154,17 +154,28 @@ class PolicyEngine:
 
         risk = self.score_risk(items, amount, tier)
 
-        # Non-fatal confirmation gates (only if not already denied)
+        # Confirmation gates — always RECORD their status (so counterfactual can
+        # reason about them even when a fatal gate already denied), but only let
+        # them flip an otherwise-allowed decision to needs_confirmation.
+        confirm_needed = amount > float(g.get("require_confirmation_above", 1e18))
+        risk_exceeds = risk["score"] > float(tier_cfg.get("risk_tolerance", 1.0))
+        manual_tier = not tier_cfg.get("allow_auto_execute", True)
+
+        gates.append({"gate": "confirm_threshold", "passed": not confirm_needed,
+                      "detail": f"amount above confirmation threshold {g.get('require_confirmation_above')}"
+                      if confirm_needed else "below confirmation threshold"})
+        gates.append({"gate": "risk_tolerance", "passed": not risk_exceeds,
+                      "detail": f"risk {risk['score']} exceeds tier tolerance {tier_cfg.get('risk_tolerance')}"
+                      if risk_exceeds else f"risk {risk['score']} within tolerance"})
+
         if decision != "deny":
-            if amount > float(g.get("require_confirmation_above", 1e18)):
+            if confirm_needed:
                 decision = "needs_confirmation"
                 violations.append(f"amount above confirmation threshold {g.get('require_confirmation_above')}")
-                gates.append({"gate": "confirm_threshold", "passed": False, "detail": "needs human approval"})
-            elif risk["score"] > float(tier_cfg.get("risk_tolerance", 1.0)):
+            elif risk_exceeds:
                 decision = "needs_confirmation"
                 violations.append(f"risk {risk['score']} exceeds tier tolerance {tier_cfg.get('risk_tolerance')}")
-                gates.append({"gate": "risk_tolerance", "passed": False, "detail": "needs human approval"})
-            elif not tier_cfg.get("allow_auto_execute", True):
+            elif manual_tier:
                 decision = "needs_confirmation"
                 violations.append(f"tier '{tier}' requires human confirmation")
 
